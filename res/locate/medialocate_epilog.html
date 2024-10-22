@@ -1,0 +1,48 @@
+      </div>
+    </div>
+    <div class = "overall left" style = "overflow-y:scroll"></div>
+    <div class = "right" id = "map"></div>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        function loadImagesLazily() {
+            let images = document.querySelectorAll("img[data-src]");
+            console.log('remaining lazy load: '+images.length);
+            for (let i = 0; i < images.length; i++) {
+                let rect = images[i].getBoundingClientRect();
+                if (images[i].hasAttribute("data-src")
+                && rect.bottom > 0 && rect.top < window.innerHeight
+                && rect.right > 0 && rect.left < window.innerWidth) {
+                    images[i].setAttribute("src", images[i].getAttribute("data-src"));
+                    images[i].removeAttribute("data-src");
+                }
+            }
+        };
+        
+        let viewport = document.getElementsByClassName('left')[0];
+        viewport.addEventListener('scroll', loadImagesLazily);
+        viewport.addEventListener('resize', loadImagesLazily);
+        loadImagesLazily();
+    });
+    
+    gpsOrigin = {latitude:0, longitude:0};
+    gpsNotreDameDeParis = {latitude:48.853,longitude:2.35};
+    GPSRef = gpsOrigin;
+
+    console.time('initializeMap');
+    initializeMap();
+    var marker = L.marker([gpsNotreDameDeParis.latitude, gpsNotreDameDeParis.longitude]).addTo(map);
+    marker._icon.classList.add("markerOrigin");
+    map.setView(new L.LatLng(gpsNotreDameDeParis.latitude, gpsNotreDameDeParis.longitude), 5);
+    console.timeEnd('initializeMap');
+
+    console.time('initializeContent');
+    initializeContent(
+        document.getElementsByClassName('left')[0],
+        document.getElementsByTagName("template")[0],
+        medialocate_data,
+        gpsOrigin
+    );
+    console.timeEnd("initializeContent");
+    </script>
+  </body>
+</html>
