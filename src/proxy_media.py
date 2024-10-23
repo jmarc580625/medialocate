@@ -4,8 +4,7 @@ import glob
 import logging
 import argparse
 
-from media_proxies import MediaProxiesControler
-
+from media.group_proxy import MediaProxiesControler
 
 def get_directories(names : list[str]) -> set[str]:
     directories = set()

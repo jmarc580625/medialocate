@@ -43,8 +43,8 @@ DEFAULT_ACTION = "echo"
 import argparse
 import logging
 
-from batch_controler import ActionControler
-from file_finder    import FileFinder
+from batch.controler import ActionControler
+from finder.file    import FileFinder
 
 def main() -> int:
     """

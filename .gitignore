@@ -1,5 +1,6 @@
 # Project specific
-data/generated
+sandbox/.medialocate/
+sandbox/medialocate.html
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -166,3 +167,4 @@ test_graph.png
 .langchain.db
 .langchain.db
 use_case_data/maintenance/demo.db
+

@@ -9,6 +9,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
+                "sandbox"
                 "${command:pickArgs}"
             ]
         }

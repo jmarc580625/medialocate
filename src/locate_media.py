@@ -7,10 +7,10 @@ import logging
 import argparse
 from pathlib import Path
 
-from batch_controler import ActionControler
-from file_finder import FileFinder
-from media_locate_action import MediaLocateAction
-from parameters import MEDIALOCATION_DIR, MEDIALOCATION_STORE_PATH
+from batch.controler import ActionControler
+from finder.file import FileFinder
+from media.locator import MediaLocateAction
+from media.parameters import MEDIALOCATION_DIR, MEDIALOCATION_STORE_PATH
 #-------------------------------------------------------------------------------
 # get script location
 #-------------------------------------------------------------------------------

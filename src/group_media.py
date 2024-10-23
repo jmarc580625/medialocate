@@ -4,9 +4,9 @@ import glob
 import logging
 import argparse
 
-from dict_store import DictStore
-from media_groups import MediaGroups
-from parameters import MEDIALOCATION_DIR, MEDIALOCATION_STORE_NAME, MEDIAGROUPS_STORE_NAME
+from store.dict import DictStore
+from media.location_grouping import MediaGroups
+from media.parameters import MEDIALOCATION_DIR, MEDIALOCATION_STORE_NAME, MEDIAGROUPS_STORE_NAME
 
 def get_directories(names : list[str]) -> set[str]:
     directories = set()
