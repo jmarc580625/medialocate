@@ -26,6 +26,9 @@ The command creates a json *group proximity register*
 
 ## Development Setup
 
+## Development Status
+[![CI/CD Pipeline](https://github.com/jmarc580625/medialocate/actions/workflows/ci.yml/badge.svg)](https://github.com/jmarc580625/medialocate/actions/workflows/ci.yml)
+
 ### Virtual Environment Setup
 
 1. Create a virtual environment (if not already created):
@@ -58,4 +61,3 @@ pre-commit install
 The project uses the following environment variables:
 ```
 PYTHONPATH=test;src
-```
