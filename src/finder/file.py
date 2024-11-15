@@ -1,27 +1,28 @@
 import os
 from collections.abc import Iterator
 
+
 class FileFinder:
 
     # instance variables
-    root_path : str
-    root_depth : int
-    extensions : tuple[str]
-    matches : list[str]
-    excluded_directories : list[str]
-    min_age : float
-    max_depth : int
-    counters : dict
+    root_path: str
+    root_depth: int
+    extensions: tuple[str]
+    matches: list[str]
+    excluded_directories: list[str]
+    min_age: float
+    max_depth: int
+    counters: dict
 
     def __init__(
-            self : 'FileFinder',
-            root_path : str,
-            extensions : list[str] = [],
-            matches : list[str] = [],
-            prune : list[str] = [],
-            min_age : float = 0,
-            max_depth : int = -1,
-            ) -> None:
+        self: "FileFinder",
+        root_path: str,
+        extensions: list[str] = [],
+        matches: list[str] = [],
+        prune: list[str] = [],
+        min_age: float = 0,
+        max_depth: int = -1,
+    ) -> None:
 
         if not os.path.isdir(root_path):
             raise FileNotFoundError(f"Path '{root_path}' is not a directory")
@@ -34,15 +35,15 @@ class FileFinder:
         self.min_age = min_age
         self.max_depth = max_depth
         self.counters = {
-            'dirs': 0,
-            'files': 0,
-            'depth': 0,
-            'found': 0,
-            }
+            "dirs": 0,
+            "files": 0,
+            "depth": 0,
+            "found": 0,
+        }
 
     def find(
-            self : 'FileFinder', 
-            ) -> Iterator[str]:
+        self: "FileFinder",
+    ) -> Iterator[str]:
         """
         Recursively search for files in the specified root_path that end with the specified extensions (case insensitive).
 
@@ -59,21 +60,31 @@ class FileFinder:
             curent_depth = len(path_elements) - self.root_depth
             depth_overflows = curent_depth > self.max_depth
 
-            if path_elements[-1] in self.excluded_directories or ( self.max_depth >= 0 and depth_overflows):
+            if path_elements[-1] in self.excluded_directories or (
+                self.max_depth >= 0 and depth_overflows
+            ):
                 continue
 
-            self.counters['dirs'] += 1
-            self.counters['depth'] = max(curent_depth, self.counters['depth'])
+            self.counters["dirs"] += 1
+            self.counters["depth"] = max(curent_depth, self.counters["depth"])
 
-            self.counters['files'] += len(files)
-            filtered_files = [f for f in files if not self.extensions or f.lower().endswith(self.extensions)]
-            filtered_files = [f for f in filtered_files if self.min_age == 0 or os.path.getmtime(os.path.join(root, f)) > self.min_age]
-            filtered_files = [f for f in filtered_files if len(self.matches) == 0 or f in self.matches]
-            self.counters['found'] += len(filtered_files)
+            self.counters["files"] += len(files)
+            filtered_files = [
+                f for f in files if not self.extensions or f.lower().endswith(self.extensions)
+            ]
+            filtered_files = [
+                f
+                for f in filtered_files
+                if self.min_age == 0 or os.path.getmtime(os.path.join(root, f)) > self.min_age
+            ]
+            filtered_files = [
+                f for f in filtered_files if len(self.matches) == 0 or f in self.matches
+            ]
+            self.counters["found"] += len(filtered_files)
 
             # yield the filtered files
             for file in filtered_files:
                 yield os.path.join(root, file)
-    
-    def get_counters(self : 'FileFinder') -> dict:
+
+    def get_counters(self: "FileFinder") -> dict:
         return self.counters
