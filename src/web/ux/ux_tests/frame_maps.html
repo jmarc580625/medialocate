@@ -1,0 +1,13 @@
+<head>
+    <script>
+        window.onmessage = function(e) {
+            console.log("loading = " + e.data)
+            var link = document.getElementById("maps_link");
+            link.href = e.data;
+            link.click();
+        };
+    </script>
+</head>
+<body>
+    <a id="maps_link" href="#" target="_self" >open</a>
+</body>

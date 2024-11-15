@@ -7,83 +7,46 @@
     <script src = "content.js"></script>
     <script src = "mapsetup.js"></script>
     <script src = "nav.js"></script>
+    <script src = "actions.js"></script>
     <script type="text/javascript" src=".medialocate/medialocate.js" class="json"></script>
-    <style>
-      .menu-bar {
-        display: flex;
-        background-color: #f1f1f1;
-        padding: 10px;
-      }
-      .menu-item {
-        margin-right: 20px;
-        cursor: pointer;
-      }
-    </style>
   </head>
   <body>
-    <div style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1001;" onmouseover="this.style.height='auto';" onmouseout="this.style.height='5px';">
-      <div class="menu-bar">
-        <div class="menu-item" onclick="openFile()">Open</div>
-        <div class="menu-item" onclick="confirmClose()">Close</div>
-        <div class="menu-item" onclick="confirmExit()">Exit</div>
-      </div>
+    <div class = "menu" onmouseover="this.style.height='auto';" onmouseout="this.style.height='2px';">
+        <div class="menu-bar">
+          <div class="menu-item" onclick="showMediasList()">Open</div>
+          <div class="menu-item" onclick="confirmClose()">Close</div>
+          <div class="menu-item" onclick="confirmExit()">Exit</div>
+          <div>&nbsp;&nbsp;[</div><div id="medias_name" style="text-emphasis: bold;"></div><div>]</div>
+        </div>
     </div>
-
-    <script>
-      function openFile() {
-        var fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.onchange = function(e) {
-          var file = fileInput.files[0];
-          var fileReader = new FileReader();
-          fileReader.onload = function(event) {
-            if (event.target.readyState === 2) {
-              var fileContent = JSON.parse(event.target.result);
-              var mediaDescriptions = setContent(fileContent, gpsNotreDameDeParis);
-              addContent(
-                document.getElementsByClassName('left')[0],
-                document.getElementsByTagName("template")[0],
-                mediaDescriptions
-              );
-            }
-          };
-          fileReader.readAsText(file);
-        };
-        fileInput.click();
-      }
-
-      function confirmExit() {
-        if (confirm('Are you sure you want to exit?')) {
-          window.close();
-        }
-      }
-
-      function confirmClose() {
-        if (confirm('Are you sure you want to close?')) {
-          clearContent(document.getElementsByClassName('left')[0]);
-        }
-      }
-
-
-</script>
+    <div class = "media_open" style="position: fixed; top: 0; left: 0; width: 50vw; height: 50vh; z-index:1001; background-color: lemonchiffon; visibility:hidden; overflow-y:scroll" id="open_div">
+      <h1>click on item to open</h1><button onclick="open_div.style.visibility = 'hidden';">Close</button>
+      <div id="medias_list"></div>
+    </div>
+    <iframe class="bottom_left" id="media_details" name="show_iframe">
+      <video width="320" height="240" controls>
+        <source src="#">
+        Your browser does not support the video tag.
+      </video>
+    </iframe>
     <div>
       <div>
         <template>
-          <div class = "parent container" id = "">
-            <a class = "media" href = "" target = _blank>
+          <div class="parent container" id="">
+            <a class="media" href="" target="show_iframe">
               <img class = "child" src = ""/>
             </a>
             <div class = "locations">
-              <a class = "oms" href = "" target = _blank></a>
-              <a class = "maps" href = "" target = _blank></a>
+              <a class = "oms" href="" target="show_iframe"></a>
+              <a class = "maps" href="" target="_blank"></a>
             </div>
           </div>
         </template>
       </div>
       <div>      </div>
     </div>
-    <div class = "overall left" style = "overflow-y:scroll"></div>
-    <div class = "right" id = "map"></div>
+    <div class="overall left top" style="overflow-y:scroll" id="medias"></div>
+    <div class="right" id="map"></div>
     <script>
     document.addEventListener("DOMContentLoaded", function () {
         function loadImagesLazily() {
@@ -100,26 +63,34 @@
             }
         };
         
-        let viewport = document.getElementsByClassName('left')[0];
+        let viewport = document.getElementById('medias');
         viewport.addEventListener('scroll', loadImagesLazily);
         viewport.addEventListener('resize', loadImagesLazily);
         loadImagesLazily();
     });
     
+    /*
     gpsOrigin = {latitude:0, longitude:0};
     gpsNotreDameDeParis = {latitude:48.853,longitude:2.35};
     GPSRef = gpsOrigin;
+    */
 
     console.time('initializeMap');
     initializeMap();
+    setMapCenter();
+    centerMap();
+    /*
     var marker = L.marker([gpsNotreDameDeParis.latitude, gpsNotreDameDeParis.longitude]).addTo(map);
     marker._icon.classList.add("markerOrigin");
     map.setView(new L.LatLng(gpsNotreDameDeParis.latitude, gpsNotreDameDeParis.longitude), 5);
+    */
     console.timeEnd('initializeMap');
+
+    //medialocate_data_dir = '';
 
     console.time('initializeContent');
     initializeContent(
-        document.getElementsByClassName('left')[0],
+        document.getElementById('medias'),
         document.getElementsByTagName("template")[0],
         medialocate_data,
         gpsOrigin

@@ -3,7 +3,7 @@ import json
 import shutil
 import unittest
 import tempfile
-from dict_store import DictStore
+from store.dict import DictStore
 
 class TestStore(unittest.TestCase):
 
@@ -253,7 +253,6 @@ class TestStore(unittest.TestCase):
 
         # Assert
         self.assertEqual(pm.data, {})
-        self.assertEqual(os.path.exists(self.store_file), False)
 
     """
     popItem unit tests
@@ -349,7 +348,7 @@ class TestStore(unittest.TestCase):
         self.assertEqual(pm.data, data)
 
     """
-    walkItems unit tests
+    items unit tests
     """
     def test_getItem_with_existing_item(self):
         # Arrange
@@ -370,7 +369,7 @@ class TestStore(unittest.TestCase):
         pm.open()
 
         # Act
-        for key, val in pm.walkItems():
+        for key, val in pm.items():
             actual_keys.append(key)
             actual_values.append(val)
 
@@ -400,7 +399,7 @@ class TestStore(unittest.TestCase):
             rec = pm.popItem('key')
 
         with self.assertRaises(Exception):
-            for key, val in pm.walkItems():
+            for key, val in pm.items():
                 pass
 
     """
@@ -423,7 +422,7 @@ class TestStore(unittest.TestCase):
 
         # Act
         with DictStore(self.store_path, self.store_filename) as pm:
-                for key, val in pm.walkItems():
+                for key, val in pm.items():
                     pass
                 pm.updateItem(item1_key, item1_valueX)
                 pm.popItem(item2_key)

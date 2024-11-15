@@ -22,4 +22,40 @@ to the *media file location index* associated with a gps point at the center of 
 proximity identification:
 A proximity identification command allows to compare two *media file grouping* and identify if they have
 groups which shows proximity. The command can specify a distance threshold which is used to determine location proximity.
-The command creates a json *group proximity register* 
+The command creates a json *group proximity register*
+
+## Development Setup
+
+### Virtual Environment Setup
+
+1. Create a virtual environment (if not already created):
+```bash
+python -m venv .venv
+```
+2. Activate the virtual environment:
+- Windows:
+```bash
+.venv\Scripts\activate
+```
+- Unix/MacOS:
+```bash
+source .venv/bin/activate
+```
+3. Install dependencies:
+- For production:
+```bash
+pip install -r requirements.txt
+```
+- For development:
+```bash
+pip install -r requirements-dev.txt
+```
+4. Install pre-commit hooks:
+```bash
+pre-commit install
+```
+### Environment Variables
+The project uses the following environment variables:
+```
+PYTHONPATH=test;src
+```

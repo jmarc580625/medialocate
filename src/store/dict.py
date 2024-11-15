@@ -16,7 +16,7 @@ class DictStore:
             ) -> None:
         
         self.directory = directory
-        self.store_path = os.path.join(directory, filename)
+        self.store_path = os.path.join(self.directory, filename)
         self.data = None
         self.touched = False
         self.opened = False

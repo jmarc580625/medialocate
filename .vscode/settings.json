@@ -2,6 +2,7 @@
     "terminal.integrated.env.windows": {
         "PYTHONPATH": "${workspaceFolder}/src;${workspaceFolder}/test"
     },
+    "debug.javascript.unmapMissingSources": true,
 //    "terminal.integrated.env.linux": {
 //        "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}/python:${env:PYTHONPATH}:${workspaceFolder}/notebooks:${workspaceFolder}/test",
 //      },

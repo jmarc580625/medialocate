@@ -12,6 +12,7 @@ import subprocess
 from media.parameters import MEDIALOCATION_STORE_NAME, MEDIALOCATION_PAGE_DATA, MEDIALOCATION_RES_DIR, MEDIALOCATION_PAGE_PROLOG, MEDIALOCATION_PAGE_EPILOG
 from store.dict import DictStore
 from location.gps import GPS
+from util.file_naming import to_posix, to_uri
 
 #-------------------------------------------------------------------------------
 # utility classes
@@ -46,8 +47,8 @@ class DataTag:
         } 
 
 class ExifKey(Enum):
-    LATITUDE = "GPSLatitude"
-    LONGITUDE = "GPSLongitude"
+    LATITUDE = "Composite:GPSLatitude"
+    LONGITUDE = "Composite:GPSLongitude"
 
     def toString(self) -> str:
         return self.value
@@ -111,19 +112,18 @@ class MediaLocateAction:
         if self.exiftool is None:
             self.exiftool = ExifToolHelper()
 
-        tags = self.exiftool.get_tags(file_to_process, tags = [ExifKey.LATITUDE.value, ExifKey.LONGITUDE.value])
+        tags = self.exiftool.get_tags(file_to_process, tags = [ExifKey.LATITUDE.value, ExifKey.LONGITUDE.value], params=['-n'])
         gps = None
-        if tags and len(tags) > 0 :
-            latitude_keys = [key for key , v in tags[0].items() if key.endswith(ExifKey.LATITUDE.value)]
-            longitude_keys = [key for key , v in tags[0].items() if key.endswith(ExifKey.LONGITUDE.value,)]
-            if len(latitude_keys) > 0 and len(longitude_keys) > 0 :
-                self.log.info(f"{file_to_process} : GPS data in {latitude_keys}, {longitude_keys}")
-                gps = GPS(latitude = tags[0].get(latitude_keys[0], 0), longitude = tags[0].get(longitude_keys[0], 0))
-                self.log.info(f"{file_to_process} : (latitude={gps.latitude}, longitude={gps.longitude})")
-                if gps.latitude + gps.longitude == 0 :
-                        gps = None
-            else:
-                self.log.info(f"{file_to_process} : no GPS data found")
+        #self.log.info(f"{file_to_process} : {', '.join(f'{k} : {v}' for k, v in tags[0].items())}")
+
+        if ExifKey.LATITUDE.value in tags[0] and ExifKey.LONGITUDE.value in tags[0]:
+            gps = GPS(latitude = tags[0][ExifKey.LATITUDE.value], longitude = tags[0][ExifKey.LONGITUDE.value])
+            self.log.info(f"{file_to_process} : (latitude={gps.latitude}, longitude={gps.longitude})")
+            if gps.latitude + gps.longitude == 0 :
+                    gps = None
+        else:
+            self.log.info(f"{file_to_process} : no GPS data found")
+                    
         return gps
 
     media_types = {
@@ -260,13 +260,9 @@ class MediaLocateAction:
 
                     data_tag = DataTag()
 
-                    data_tag.mediasource =  PurePath(file_to_process).as_posix()
-
-                    data_tag.mediasource = os.path.relpath(Path(file_to_process).resolve().as_uri(), 
-                                                           start=Path(".").resolve().as_uri())
-
-                    data_tag.mediathumbnail = os.path.relpath(Path(thumb_filename).resolve().as_uri(),
-                                                              start=Path(".").resolve().as_uri())
+                    data_tag.mediasource = to_posix(file_to_process)
+                    data_tag.mediasource = to_uri(file_to_process)
+                    data_tag.mediathumbnail = to_uri(thumb_filename)
 
                     data_tag.mediaformat = media_format
                     data_tag.mediatype = media_type

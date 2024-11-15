@@ -1,0 +1,10 @@
+<script>
+    window.onmessage = function(e) {
+            alert('It works!' + e.data);
+            var video = document.getElementById("video_tag");
+            console.log("video id = " + video.getAttribute("id"))
+            video.src = e.data;
+    };
+
+</script>
+<video id="video_tag"  autoplay src="#" width="520" height="360" controls></video><br>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel = "stylesheet" href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY" crossorigin = ""/>
+    <script src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity = "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo" crossorigin = ""></script>
+    <link rel = "stylesheet" href = "medialocate_overall.css">
+    <link rel = "stylesheet" href = "medialocate_info.css">
+    <script src = "api_endpoints.js"></script>
+    <script src = "custom_events.js"></script>
+    <script src = "nav.js"></script>
+    <script src = "map_helper.js"></script>
+    <script src = "media_helper.js"></script>
+    <script src = "actions.js"></script>
+  </head>
+  <body>
+    <div>
+      <div>
+        <template id="media_info_template">
+          <div class="parent container" id="">
+            <a class="media" href="" target="show_iframe">
+              <img class = "child" src = ""/>
+            </a>
+            <div class = "locations">
+              <a class = "oms" href="" target="show_iframe"></a>
+              <a class = "maps" href="" target="_blank"></a>
+            </div>
+          </div>
+        </template>
+      </div>
+      <div>      </div>
+    </div>
+    <div class="left overall">
+      <div id="album_chooser" class="left top album-chooser" style="display: flex; flex-direction: column;">
+          <div id="album_chooser_header" style="text-align: center;">please wait while searching albums</div>
+          <div id="album_chooser_list"></div>
+      </div>
+      <div class="left top"  style="display: flex; flex-direction: column;">
+        <div id="menu_bar" class = "menu">
+          <div class="menu-bar">
+            <div class="menu-item" id="menu_close">Close</div>
+            <div class="menu-item" id="menu_exit">Exit</div>
+            <div>[</div>
+            <div id="album_name" style="text-emphasis: bold;"></div>
+            <div>]</div>
+          </div>
+        </div>
+        <div id="media_infos" class="media-infos">
+        </div>
+      </div>
+      <iframe id="media_details" class="left bottom media-details" name="show_iframe">
+      </iframe>
+    </div>
+    <div id="map" class="right overall geolocation"></div>
+    <script>
+      // some gps coordinates
+      gpsOrigin = {latitude:0, longitude:0};
+      gpsNotreDameDeParis = {latitude:48.853,longitude:2.35};
+
+      // ux action controlers setup
+      var menu = new Menu();
+      var media_details = new MediaDetails();
+      var media_infos = new MediaInfos(gpsNotreDameDeParis);
+      var album_chooser = new AlbumChooser();
+
+      // map setup
+      var map_controler = new MapControler(gpsNotreDameDeParis);
+
+      // start the album chooser
+      album_chooser.get();
+
+    </script>
+  </body>
+</html>
+
+
+
+

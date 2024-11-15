@@ -1,17 +1,45 @@
 {
-    "version": "0.2.0",
     "configurations": [
-
         {
-            "name": "Python Debugger: Current File with Arguments",
+            "name": "Python Debugger: locate_media.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/locate_media.py",
+            "console": "integratedTerminal",
+            "args": [
+                "sandbox",
+                "${command:pickArgs}"
+            ]
+        },
+        {
+            "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python Debugger: media_server.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/web/media_server.py",
             "console": "integratedTerminal",
             "args": [
-                "sandbox"
-                "${command:pickArgs}"
+                "-d",
+                "\\\\LaSourceNas\\colexion-3\\video\\amateur"
             ]
-        }
+        },
+        {
+            "type": "msedge",
+            "name": "localhost:5000",
+            "request": "launch",
+            "url": "localhost:5000"
+        },
+        {
+            "type": "msedge",
+            "name": "file:////${workspaceFolder}/src/web_ux/medialocate.html",
+            "request": "launch",
+            "url": "file:////${workspaceFolder}/src/web_ux/medialocate.html"
+        },
     ]
 }

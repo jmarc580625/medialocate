@@ -125,10 +125,10 @@ celerybeat.pid
 
 # Environments
 .env
-.venv
-env/
+.venv/
 venv/
 ENV/
+env/
 env.bak/
 venv.bak/
 
@@ -167,4 +167,5 @@ test_graph.png
 .langchain.db
 .langchain.db
 use_case_data/maintenance/demo.db
+.vscode/
 

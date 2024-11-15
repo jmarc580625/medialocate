@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch
 import time
 import hashlib
-from batch_status import ProcessingStatus
+from batch.status import ProcessingStatus
 
 class TestProcessingStatus(unittest.TestCase):
 
@@ -32,7 +32,7 @@ class TestProcessingStatus(unittest.TestCase):
     __init__ unit tests
     """
 
-    @patch('batchfile_process_store.Store')
+    @patch('store.dict.DictStore')
     def test_init_Status_instance_without_store(self, StoreMock):
         # Act
         storeMock = StoreMock.return_value
@@ -107,7 +107,7 @@ class TestProcessingStatus(unittest.TestCase):
     getFromStore unit tests
     """
 
-    @patch('batchfile_process_store.Store')
+    @patch('store.dict.DictStore')
     def test_getFromStore(self, StoreMock):
         # Arrange
         key = "key"
@@ -133,7 +133,7 @@ class TestProcessingStatus(unittest.TestCase):
     unit tests
     """
 
-    @patch('batchfile_process_store.Store')
+    @patch('store.dict.DictStore')
     def test_getAllFromStore(self, StoreMock):
         # Arrange
         key1 = "key1"
@@ -174,7 +174,7 @@ class TestProcessingStatus(unittest.TestCase):
     deleteAll unit tests
     """
 
-    @patch('batchfile_process_store.Store')
+    @patch('store.dict.DictStore')
     def test_deleteAll(self, StoreMock):
         # Arrange
         storeMock = StoreMock.return_value
@@ -190,7 +190,7 @@ class TestProcessingStatus(unittest.TestCase):
     getter methods unit tests
     """
 
-    @patch('batchfile_process_store.Store')
+    @patch('store.dict.DictStore')
     def test_getFilename(self, StoreMock):
         # Arrange
         storeMock = StoreMock.return_value
@@ -205,7 +205,7 @@ class TestProcessingStatus(unittest.TestCase):
         # Assert
         self.assertEqual(a_filename, filename)
 
-    @patch('batchfile_process_store.Store')
+    @patch('store.dict.DictStore')
     def test_getState(self, StoreMock):
         # Arrange
         storeMock = StoreMock.return_value
@@ -220,7 +220,7 @@ class TestProcessingStatus(unittest.TestCase):
         # Assert
         self.assertEqual(a_state, state)
 
-    @patch('batchfile_process_store.Store')
+    @patch('store.dict.DictStore')
     def test_getTime(self, StoreMock):
         # Arrange
         storeMock = StoreMock.return_value
@@ -239,7 +239,7 @@ class TestProcessingStatus(unittest.TestCase):
     ProcessingProcessingStatus.update unit tests
     """
 
-    @patch('batchfile_process_store.Store')
+    @patch('store.dict.DictStore')
     def test_update_new(self, StoreMock):
         # Arrange
         storeMock = StoreMock.return_value
@@ -257,7 +257,7 @@ class TestProcessingStatus(unittest.TestCase):
                                                      ProcessingStatus._filename_key: filename, 
                                                      ProcessingStatus._time_key: now})
 
-    @patch('batchfile_process_store.Store')
+    @patch('store.dict.DictStore')
     def test_update_get_from_store_modified(self, StoreMock):
         # Arrange
         key = "key"
@@ -276,7 +276,7 @@ class TestProcessingStatus(unittest.TestCase):
         # Assert
         storeMock.updateItem.assert_not_called() 
 
-    @patch('batchfile_process_store.Store')
+    @patch('store.dict.DictStore')
     def test_update_get_from_store_unmodified(self, StoreMock):
         # Arrange
         key = "key"
@@ -303,7 +303,7 @@ class TestProcessingStatus(unittest.TestCase):
     ProcessingProcessingStatus.delete unit tests
     """
 
-    @patch('batchfile_process_store.Store')
+    @patch('store.dict.DictStore')
     def test_delete_new(self, StoreMock):
         # Arrange
         storeMock = StoreMock.return_value
@@ -318,7 +318,7 @@ class TestProcessingStatus(unittest.TestCase):
         # Assert
         storeMock.updateItem.assert_not_called()
 
-    @patch('batchfile_process_store.Store')
+    @patch('store.dict.DictStore')
     def test_delete_get_from_store_unmodified(self, StoreMock):
         # Arrange
         key = "key"

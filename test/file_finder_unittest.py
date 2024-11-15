@@ -2,7 +2,7 @@ import os
 import time
 import unittest
 import tempfile
-from file_finder import FileFinder
+from finder.file import FileFinder
 
 class TestFileFinder(unittest.TestCase):
 

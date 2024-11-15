@@ -1,0 +1,63 @@
+/* main areas positioning styles */
+.right {
+  position: absolute;
+  left: 50vw;
+  width: 50vw;
+}
+.left {
+  position: absolute;
+  left: 0;
+  width: 50vw;
+ }
+.overall {
+  position: absolute;
+  top: 0;
+  height: 100%;
+}
+.top {
+  position: absolute;
+  top: 0;
+  bottom: 50%; 
+}
+.bottom {
+  position: absolute;
+  top: 50vh;
+  height: 50%;
+ }
+
+ /* main areas display styles */
+ .album-chooser {
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image: url(images/loading.gif);
+  background-size: 100px;
+  background-color: lemonchiffon;
+  overflow-y:scroll;
+  z-index: 1001;
+}
+.menu {
+  background-color: lightgray;
+}
+.menu-bar {
+  display: flex;
+  padding: 10px;
+}
+.menu-item {
+  margin-right: 10px;
+  cursor: pointer;
+}
+.media-infos {
+  background-color: white;
+  overflow-y:scroll;
+}
+.media-details {
+  background-color: lightgray;
+  border-width: 0px;
+}
+.geolocation {
+  background-color: lightskyblue;
+}
+
+/* geolocation area styles */
+img.markerOrigin { filter: hue-rotate(120deg); }
+img.markerFocus { filter: hue-rotate(260deg); }

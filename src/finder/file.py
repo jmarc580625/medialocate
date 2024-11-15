@@ -7,6 +7,7 @@ class FileFinder:
     root_path : str
     root_depth : int
     extensions : tuple[str]
+    matches : list[str]
     excluded_directories : list[str]
     min_age : float
     max_depth : int
@@ -16,6 +17,7 @@ class FileFinder:
             self : 'FileFinder',
             root_path : str,
             extensions : list[str] = [],
+            matches : list[str] = [],
             prune : list[str] = [],
             min_age : float = 0,
             max_depth : int = -1,
@@ -27,6 +29,7 @@ class FileFinder:
         self.root_path = root_path
         self.root_depth = len(self.root_path.split(os.sep))
         self.extensions = tuple([e.lower() for e in extensions])
+        self.matches = matches
         self.excluded_directories = prune
         self.min_age = min_age
         self.max_depth = max_depth
@@ -64,7 +67,8 @@ class FileFinder:
 
             self.counters['files'] += len(files)
             filtered_files = [f for f in files if not self.extensions or f.lower().endswith(self.extensions)]
-            filtered_files = [f for f in filtered_files if self.min_age == 0 or os.path.getmtime(os.path.join(root, f)) > self.min_age]          
+            filtered_files = [f for f in filtered_files if self.min_age == 0 or os.path.getmtime(os.path.join(root, f)) > self.min_age]
+            filtered_files = [f for f in filtered_files if len(self.matches) == 0 or f in self.matches]
             self.counters['found'] += len(filtered_files)
 
             # yield the filtered files

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel = "stylesheet" href = "medialocate_overall.css">
+    <link rel = "stylesheet" href = "medialocate_info.css">
+  </head>
+  <body>
+    <div>
+      <div>
+        <template>
+          <div class="parent container" id="">
+            <a class="media" href="" target="show_iframe">
+              <img class = "child" src = ""/>
+            </a>
+            <div class = "locations">
+              <a class = "oms" href="" target="show_iframe"></a>
+              <a class = "maps" href="" target="_blank"></a>
+            </div>
+          </div>
+        </template>
+      </div>
+      <div>      </div>
+    </div>
+    <div class="left overall">
+      <div class="left top album-chooser" id="album_chooser" >
+        <p>select an album</p><br>
+        <div id="medias_list">
+          <button onclick="album_chooser.style.visibility = 'hidden';">Close</button>
+        </div>
+      </div>
+      <div class="left top"  style="display: flex; flex-direction: column;">
+        <div class = "menu">
+          <div class="menu-bar">
+            <div class="menu-item">Albums</div>
+            <div class="menu-item">Close</div>
+            <div class="menu-item">Exit</div>
+            <div>&nbsp;&nbsp;[</div><div id="medias_name" style="text-emphasis: bold;"></div><div>]</div>
+          </div>
+        </div>
+        <div class="media-infos"  id="media_infos">
+          <div class="parent container" id="d8b6237c1687aa1a0a2384fc1999ed93" data-latitude="27.75809" data-longitude="-15.60089">
+            <a class="media" href="C:\Users\s231853\OneDrive - Eviden\Documents\development\medialocate\sandbox\alaska\Alaska-Brown-Bears-01.mp4" target="show_iframe">
+              <img class="child" src="C:\Users\s231853\OneDrive - Eviden\Documents\development\medialocate\sandbox\.medialocate\2800644878cc03b52135d684708470b5.jpg">
+            </a>
+            <div class="locations">
+              <a class="oms" href="https://nominatim.openstreetmap.org/ui/reverse.html?lat=27.75809&amp;lon=-15.60089&amp;zoom=18" target="show_iframe"></a>
+              <a class="maps" href="https://www.google.fr/maps?&amp;q=27.75809,-15.60089&amp;z=17" target="_blank"></a>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      <iframe class="left bottom media-details" id="media_details" name="show_iframe">
+      </iframe>
+    </div>
+    <div class="right overall geolocation" id="map"></div>
+    <script>
+    </script>
+  </body>
+</html>

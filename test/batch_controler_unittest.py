@@ -3,7 +3,7 @@ from unittest.mock import patch
 from enum import Enum
 import tempfile
 import time
-from batch_controler import ActionControler
+from batch.controler import ActionControler
 
 class TestProcessMemory(unittest.TestCase):
 
@@ -22,8 +22,8 @@ class TestProcessMemory(unittest.TestCase):
         working_directory = "dummy_directory_name"
 
         # Act
-        with patch('batchfile_process_controler.ProcessingStatus') as StatusMock:
-            with patch('batchfile_process_controler.Store') as StoreMock:
+        with patch('batch.controler.ProcessingStatus') as StatusMock:
+            with patch('batch.controler.DictStore') as StoreMock:
                 orchestrator = ActionControler(
                     working_directory,
                     action,
@@ -39,8 +39,8 @@ class TestProcessMemory(unittest.TestCase):
         working_directory = "dummy_directory_name"
 
         # Act
-        with patch('batchfile_process_controler.ProcessingStatus') as StatusMock:
-            with patch('batchfile_process_controler.Store') as StoreMock:
+        with patch('batch.controler.ProcessingStatus') as StatusMock:
+            with patch('batch.controler.DictStore') as StoreMock:
                 orchestrator = ActionControler(
                     working_directory,
                     action,
@@ -56,8 +56,8 @@ class TestProcessMemory(unittest.TestCase):
         working_directory = "dummy_directory_name"
 
         # Act
-        with patch('batchfile_process_controler.ProcessingStatus') as StatusMock:
-            with patch('batchfile_process_controler.Store') as StoreMock:
+        with patch('batch.controler.ProcessingStatus') as StatusMock:
+            with patch('batch.controler.DictStore') as StoreMock:
                 orchestrator = ActionControler(
                     working_directory,
                     myAction,
@@ -75,8 +75,8 @@ class TestProcessMemory(unittest.TestCase):
         working_directory = "dummy_directory_name"
 
         # Act
-        with patch('batchfile_process_controler.ProcessingStatus') as StatusMock:
-            with patch('batchfile_process_controler.Store') as StoreMock:
+        with patch('batch.controler.ProcessingStatus') as StatusMock:
+            with patch('batch.controler.DictStore') as StoreMock:
                 orchestrator = ActionControler(
                     working_directory,
                     myAction,
@@ -97,7 +97,7 @@ class TestProcessMemory(unittest.TestCase):
         key = 'key'
         states = Enum('State', [("DONE", "done"), ("ONGOING", "tmp"), ("IGNORE", "ignore"), ("ERROR", "error")])
 
-        with patch('batchfile_process_controler.ProcessingStatus') as StatusMock:
+        with patch('batch.controler.ProcessingStatus') as StatusMock:
             StatusMock.filename_hash.return_value = key
             StatusMock.getFromStore.return_value = None
             StatusMock.return_value.update.return_value = None
@@ -105,7 +105,7 @@ class TestProcessMemory(unittest.TestCase):
             StatusMock.State.ONGOING = states.ONGOING
             StatusMock.State.IGNORE = states.IGNORE
             StatusMock.State.ERROR = states.ERROR
-            with patch('batchfile_process_controler.Store') as StoreMock:
+            with patch('batch.controler.DictStore') as StoreMock:
                 StoreMock.return_value.getItem.return_value = None
                 orchestrator = ActionControler(
                     working_directory,
@@ -130,7 +130,7 @@ class TestProcessMemory(unittest.TestCase):
         now = time.time()
         states = Enum('State', [("DONE", "done"), ("ONGOING", "tmp"), ("IGNORE", "ignore"), ("ERROR", "error")])
 
-        with patch('batchfile_process_controler.ProcessingStatus') as StatusMock:
+        with patch('batch.controler.ProcessingStatus') as StatusMock:
             StatusMock.filename_hash.return_value = key
             StatusMock.getFromStore.return_value = StatusMock.return_value
             StatusMock.return_value.getState.return_value = states.IGNORE
@@ -139,7 +139,7 @@ class TestProcessMemory(unittest.TestCase):
             StatusMock.State.ONGOING = states.ONGOING
             StatusMock.State.IGNORE = states.IGNORE
             StatusMock.State.ERROR = states.ERROR
-            with patch('batchfile_process_controler.Store') as StoreMock:
+            with patch('batch.controler.DictStore') as StoreMock:
                 orchestrator = ActionControler(
                     working_directory,
                     None,
@@ -156,7 +156,7 @@ class TestProcessMemory(unittest.TestCase):
                 StatusMock.return_value.setState.assert_not_called()
                 StatusMock.return_value.update.assert_not_called()
 
-    @patch('batchfile_process_controler.os')
+    @patch('batch.controler.os')
     def test_process_for_done_status(self, OsMock):
         # Arrange
         working_directory = "dummy_directory_name"
@@ -167,7 +167,7 @@ class TestProcessMemory(unittest.TestCase):
 
         OsMock.path.getmtime.return_value = 0.0
 
-        with patch('batchfile_process_controler.ProcessingStatus') as StatusMock:
+        with patch('batch.controler.ProcessingStatus') as StatusMock:
             StatusMock.filename_hash.return_value = key
             StatusMock.getFromStore.return_value = StatusMock.return_value
             StatusMock.return_value.getState.return_value = states.DONE
@@ -178,7 +178,7 @@ class TestProcessMemory(unittest.TestCase):
             StatusMock.State.IGNORE = states.IGNORE
             StatusMock.State.ERROR = states.ERROR
             #TODO : mock os.path.getmtime()
-            with patch('batchfile_process_controler.Store') as StoreMock:
+            with patch('batch.controler.DictStore') as StoreMock:
                 orchestrator = ActionControler(
                     working_directory,
                     None,
@@ -203,7 +203,7 @@ class TestProcessMemory(unittest.TestCase):
         now = time.time()
         states = Enum('State', [("DONE", "done"), ("ONGOING", "tmp"), ("IGNORE", "ignore"), ("ERROR", "error")])
 
-        with patch('batchfile_process_controler.ProcessingStatus') as StatusMock:
+        with patch('batch.controler.ProcessingStatus') as StatusMock:
             StatusMock.filename_hash.return_value = key
             StatusMock.getFromStore.return_value = StatusMock.return_value
             StatusMock.return_value.getState.return_value = states.DONE
@@ -214,7 +214,7 @@ class TestProcessMemory(unittest.TestCase):
             StatusMock.State.IGNORE = states.IGNORE
             StatusMock.State.ERROR = states.ERROR
             #TODO : mock os.path.getmtime()
-            with patch('batchfile_process_controler.Store') as StoreMock:
+            with patch('batch.controler.DictStore') as StoreMock:
                 orchestrator = ActionControler(
                     working_directory,
                     None,
@@ -240,7 +240,7 @@ class TestProcessMemory(unittest.TestCase):
         now = time.time()
         states = Enum('State', [("DONE", "done"), ("ONGOING", "tmp"), ("IGNORE", "ignore"), ("ERROR", "error")])
 
-        with patch('batchfile_process_controler.ProcessingStatus') as StatusMock:
+        with patch('batch.controler.ProcessingStatus') as StatusMock:
             StatusMock.filename_hash.return_value = key
             StatusMock.getFromStore.return_value = StatusMock.return_value
             StatusMock.return_value.getState.return_value = states.ONGOING
@@ -251,7 +251,7 @@ class TestProcessMemory(unittest.TestCase):
             StatusMock.State.IGNORE = states.IGNORE
             StatusMock.State.ERROR = states.ERROR
             #TODO : mock os.path.getmtime()
-            with patch('batchfile_process_controler.Store') as StoreMock:
+            with patch('batch.controler.DictStore') as StoreMock:
                 orchestrator = ActionControler(
                     working_directory,
                     None,
@@ -277,14 +277,14 @@ class TestProcessMemory(unittest.TestCase):
         key = 'key'
         states = Enum('State', [("DONE", "done"), ("ONGOING", "tmp"), ("IGNORE", "ignore"), ("ERROR", "error")])
 
-        with patch('batchfile_process_controler.ProcessingStatus') as StatusMock:
+        with patch('batch.controler.ProcessingStatus') as StatusMock:
             StatusMock.filename_hash.return_value = key
             StatusMock.getFromStore.return_value = None
             StatusMock.State.DONE = states.DONE
             StatusMock.State.ONGOING = states.ONGOING
             StatusMock.State.IGNORE = states.IGNORE
             StatusMock.State.ERROR = states.ERROR
-            with patch('batchfile_process_controler.Store') as StoreMock:
+            with patch('batch.controler.DictStore') as StoreMock:
                 StoreMock.return_value.getItem.return_value = None
                 orchestrator = ActionControler(
                     working_directory,
@@ -309,14 +309,14 @@ class TestProcessMemory(unittest.TestCase):
         key = 'key'
         states = Enum('State', [("DONE", "done"), ("ONGOING", "tmp"), ("IGNORE", "ignore"), ("ERROR", "error")])
 
-        with patch('batchfile_process_controler.ProcessingStatus') as StatusMock:
+        with patch('batch.controler.ProcessingStatus') as StatusMock:
             StatusMock.filename_hash.return_value = key
             StatusMock.getFromStore.return_value = None
             StatusMock.State.DONE = states.DONE
             StatusMock.State.ONGOING = states.ONGOING
             StatusMock.State.IGNORE = states.IGNORE
             StatusMock.State.ERROR = states.ERROR
-            with patch('batchfile_process_controler.Store') as StoreMock:
+            with patch('batch.controler.DictStore') as StoreMock:
                 StoreMock.return_value.getItem.return_value = None
                 orchestrator = ActionControler(
                     working_directory,
@@ -338,17 +338,17 @@ class TestProcessMemory(unittest.TestCase):
     ProcessingOrchestrator.clean unit tests
     """
 
-    @patch('batchfile_process_controler.os')
+    @patch('batch.controler.os')
     def test_clean(self, OsMock):
         filename = "my_file.txt"
         working_directory = "dummy_directory_name"
 
         OsMock.path.isfile.return_value = False
 
-        with patch('batchfile_process_controler.ProcessingStatus') as StatusMock:
+        with patch('batch.controler.ProcessingStatus') as StatusMock:
             StatusMock.getAllFromStore.return_value = [StatusMock.return_value for _ in range(10)]  
             StatusMock.return_value.getFilename.return_value = filename
-            with patch('batchfile_process_controler.Store') as StoreMock:
+            with patch('batch.controler.DictStore') as StoreMock:
                 StoreMock.return_value.getItem.return_value = None
                 orchestrator = ActionControler(
                     working_directory,
@@ -370,7 +370,7 @@ class TestProcessMemory(unittest.TestCase):
     def test_drop(self):
         # Arrange
         working_directory = "dummy_directory_name"
-        with patch('batchfile_process_controler.Store') as StoreMock:
+        with patch('batch.controler.DictStore') as StoreMock:
             orchestrator = ActionControler(
                 working_directory,
                 None,
@@ -388,7 +388,7 @@ class TestProcessMemory(unittest.TestCase):
 
     """
 
-    @patch('batchfile_process_controler.os')
+    @patch('batch.controler.os')
     def test_get_counters_with_combination_of_file_state_and_action_results(self, OsMock):
         """ +------------------------------------------------+
             | 5 file states and 3 action results = 15 cases  |
@@ -431,7 +431,7 @@ class TestProcessMemory(unittest.TestCase):
         working_directory = "dummy_directory_name"
         key = 'key'
         states = Enum('State', [("DONE", "done"), ("ONGOING", "tmp"), ("IGNORE", "ignore"), ("SUCCESS", "success"), ("ERROR", "error"), ("NEW", "new")])
-        with patch('batchfile_process_controler.ProcessingStatus') as StatusMock:
+        with patch('batch.controler.ProcessingStatus') as StatusMock:
             StatusMock.State.DONE = states.DONE
             StatusMock.State.ONGOING = states.ONGOING
             StatusMock.State.SUCCESS = states.SUCCESS
