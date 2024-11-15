@@ -4,38 +4,53 @@ import subprocess
 from store.dict import DictStore
 from batch.status import ProcessingStatus
 
+
 class ActionControler:
 
     # counters gathering ActionControler statistics
-    RECOVERED = "recovered"              # number of files which status is recovered from store
-    RECIEVED = "recieved"                # number of files received for processing
-    RECORDED = "recorded"                # number of files whith no status having one being recorded
-    REPAIRED = "repaired"                # number of files whith a recorded status "error", action is performed on it
-    PROCESSED = "processed"              # number of files processed by the action
-    IGNORED = "ignored"                  # number of files witch action reports to further ignore it
-    SUCCEEDED = "succeeded"              # number of files witch action reports a success
-    FAILED = "failed"                    # number of files witch action reports an error
-    DELETED = "deleted"                  # number of files which status has been deleted
-    SAVED = "saved"                      # number of files which status has been saved in the store
-    _COUNTER_LIST = {RECOVERED, RECIEVED, RECORDED, REPAIRED, PROCESSED, IGNORED, SUCCEEDED, FAILED, DELETED, SAVED}
+    RECOVERED = "recovered"  # number of files which status is recovered from store
+    RECIEVED = "recieved"  # number of files received for processing
+    RECORDED = "recorded"  # number of files whith no status having one being recorded
+    REPAIRED = (
+        "repaired"  # number of files whith a recorded status "error", action is performed on it
+    )
+    PROCESSED = "processed"  # number of files processed by the action
+    IGNORED = "ignored"  # number of files witch action reports to further ignore it
+    SUCCEEDED = "succeeded"  # number of files witch action reports a success
+    FAILED = "failed"  # number of files witch action reports an error
+    DELETED = "deleted"  # number of files which status has been deleted
+    SAVED = "saved"  # number of files which status has been saved in the store
+    _COUNTER_LIST = {
+        RECOVERED,
+        RECIEVED,
+        RECORDED,
+        REPAIRED,
+        PROCESSED,
+        IGNORED,
+        SUCCEEDED,
+        FAILED,
+        DELETED,
+        SAVED,
+    }
 
     LOGGER_NAME = "ProcessMemory"
     STATUS_STORE_NAME = "pmstatus.json"
 
     # instance attributes
-    log : logging.Logger
-    force_option : bool
-    action : callable
-    store : DictStore
-    counters : dict
+    log: logging.Logger
+    force_option: bool
+    action: callable
+    store: DictStore
+    counters: dict
 
-    def __init__(self : 'ActionControler', 
-                 working_directory: str, 
-                 action, 
-                 action_is_shell: bool, 
-                 force_option : bool = False, 
-                 parent_logger: str = None,
-                 ) -> None:
+    def __init__(
+        self: "ActionControler",
+        working_directory: str,
+        action,
+        action_is_shell: bool,
+        force_option: bool = False,
+        parent_logger: str = None,
+    ) -> None:
 
         self.counters = {}
         for counter in ActionControler._COUNTER_LIST:
@@ -43,9 +58,11 @@ class ActionControler:
 
         self.store = DictStore(working_directory, ActionControler.STATUS_STORE_NAME)
         self.store.open()
-        self.counters[ActionControler.RECOVERED] = self.store.size()      
-        
-        self.log = logging.getLogger(".".join(filter(None, [parent_logger, ActionControler.LOGGER_NAME])))
+        self.counters[ActionControler.RECOVERED] = self.store.size()
+
+        self.log = logging.getLogger(
+            ".".join(filter(None, [parent_logger, ActionControler.LOGGER_NAME]))
+        )
 
         """
         Forces action to be performed even when a file is older than its corresponding status file
@@ -63,21 +80,23 @@ class ActionControler:
             self.action = lambda file_to_process, filename_hash: 0
         else:
             if action_is_shell:
-                self.action = lambda file_to_process, filename_hash: subprocess.run([action, file_to_process, filename_hash], shell=action_is_shell, check=True).returncode
+                self.action = lambda file_to_process, filename_hash: subprocess.run(
+                    [action, file_to_process, filename_hash], shell=action_is_shell, check=True
+                ).returncode
             else:
                 self.action = action
 
-    def __enter__(self : 'ActionControler'):
+    def __enter__(self: "ActionControler"):
         return self
 
-    def __exit__(self : 'ActionControler', *args):
+    def __exit__(self: "ActionControler", *args):
         self.counters[ActionControler.SAVED] = self.store.size()
         self.store.close()
 
-    def get_counters(self : 'ActionControler') -> dict:
+    def get_counters(self: "ActionControler") -> dict:
         return self.counters
 
-    def clean(self : 'ActionControler') -> None:
+    def clean(self: "ActionControler") -> None:
         """
         Remove status which value has no corresponding file.
         No further file processing is made.
@@ -86,14 +105,14 @@ class ActionControler:
             if not os.path.isfile(status.getFilename()):
                 status.delete()
 
-    def drop(self : 'ActionControler') -> None:
+    def drop(self: "ActionControler") -> None:
         """
         Remove all status.
         No further file processing is made.
         """
         self.store.drop()
 
-    def process(self : 'ActionControler', file_to_process: str) -> None:
+    def process(self: "ActionControler", file_to_process: str) -> None:
         """
         a store is used to capture the file's processing status and optimize its future re-processing.
         the processing status records uses the file name hash as key and contains
@@ -103,9 +122,9 @@ class ActionControler:
         status are:
             ONGOING for file with ongoing process
             DONE for file that has been successfully processed
-            IGNORE for file that must be ignored, no further action are performed on it 
+            IGNORE for file that must be ignored, no further action are performed on it
             ERROR for file processed with an error
-        action: 
+        action:
             is triggered for files with no existing status file or with status file older than the file itself, unless force option is set True
             recieves two parameters, the file name and the current status file name
             performs action associated with the file
@@ -119,13 +138,17 @@ class ActionControler:
         status = ProcessingStatus.getFromStore(self.store, key)
 
         if status is None:
-            status = ProcessingStatus(self.store, key, ProcessingStatus.State.ONGOING, file_to_process)
+            status = ProcessingStatus(
+                self.store, key, ProcessingStatus.State.ONGOING, file_to_process
+            )
             proceed_action = True
             self.counters[ActionControler.RECORDED] += 1
         else:
             state = status.getState()
             if state == ProcessingStatus.State.DONE:
-                proceed_action = self.force_option or os.path.getmtime(file_to_process) > status.getTime()
+                proceed_action = (
+                    self.force_option or os.path.getmtime(file_to_process) > status.getTime()
+                )
             elif state == ProcessingStatus.State.ERROR:
                 self.counters[ActionControler.REPAIRED] += 1
                 proceed_action = True
@@ -135,7 +158,7 @@ class ActionControler:
         if proceed_action:
             self.counters[ActionControler.PROCESSED] += 1
             rc = self.action(file_to_process, status.key)
-            if  rc > 9:
+            if rc > 9:
                 status.setState(ProcessingStatus.State.ERROR)
                 self.counters[ActionControler.FAILED] += 1
             elif rc == 0:

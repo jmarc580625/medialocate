@@ -1,6 +1,6 @@
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # usage & help
-#-------------------------------------------------------------------------------"""
+# -------------------------------------------------------------------------------"""
 USAGE = " %s [-p] [-c] [-f] [-h] [-v] memory_directory action"
 HELP = """
 walk the directory tree from the curent directory and process files with processing_command.
@@ -32,19 +32,20 @@ EXAMPLE:
   find . -path ./.mymemory -prune -o -type f -print | processMemory ./.mymemory ls
 """
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # Constants
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 DEFAULT_ACTION = "echo"
 
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # Imports
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 import argparse
 import logging
 
 from batch.controler import ActionControler
-from finder.file    import FileFinder
+from finder.file import FileFinder
+
 
 def main() -> int:
     """
@@ -67,29 +68,53 @@ def main() -> int:
     :param args: the command line arguments as parsed by argparse
     :return: 0 if the command line arguments are valid and the processing is successful, 1 otherwise
     """
-    parser = argparse.ArgumentParser(description="Optimize batch processing of files using a memory directory.")
-    parser.add_argument("-p", action="store_true", help="purge mode, removes any status files in memory_directory which has no corresponding file and no further file processing is made")
-    parser.add_argument("-c", action="store_true", help="clear all status files from memory_directory")
-    parser.add_argument("-f", action="store_true", help="forces file processing even when status file is newer than its corresponding file")
-    parser.add_argument("-v", action="count", default=0, help="verbose mode, trace progress on standard error")
-    parser.add_argument("memory_directory", type=str, help="directory where to store file processing status")
-    parser.add_argument("processing_command", nargs="?", default=DEFAULT_ACTION, help="processing command")
+    parser = argparse.ArgumentParser(
+        description="Optimize batch processing of files using a memory directory."
+    )
+    parser.add_argument(
+        "-p",
+        action="store_true",
+        help="purge mode, removes any status files in memory_directory which has no corresponding file and no further file processing is made",
+    )
+    parser.add_argument(
+        "-c", action="store_true", help="clear all status files from memory_directory"
+    )
+    parser.add_argument(
+        "-f",
+        action="store_true",
+        help="forces file processing even when status file is newer than its corresponding file",
+    )
+    parser.add_argument(
+        "-v", action="count", default=0, help="verbose mode, trace progress on standard error"
+    )
+    parser.add_argument(
+        "memory_directory", type=str, help="directory where to store file processing status"
+    )
+    parser.add_argument(
+        "processing_command", nargs="?", default=DEFAULT_ACTION, help="processing command"
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.NOTSET)
     log = logging.getLogger("ProcessMemory")
-    log.debug(f'args.c={args.c}, args.f={args.f}, args.p={args.p}, args.v={args.v}, args.memory_directory={args.memory_directory}, args.processing_command={args.processing_command}')
- 
+    log.debug(
+        f"args.c={args.c}, args.f={args.f}, args.p={args.p}, args.v={args.v}, args.memory_directory={args.memory_directory}, args.processing_command={args.processing_command}"
+    )
+
     try:
         memory_store_location = args.memory_directory
         finder = FileFinder(".", [], [memory_store_location])
-        with ActionControler(memory_store_location, 
-                             action=args.processing_command,
-                             action_is_shell=True, 
-                             force_option=args.f) as controler:
+        with ActionControler(
+            memory_store_location,
+            action=args.processing_command,
+            action_is_shell=True,
+            force_option=args.f,
+        ) as controler:
             if args.p:
                 controler.clean()
-                log.info(f"{controler.get_counters()}".replace("'","").replace('{',"").replace('}',""))
+                log.info(
+                    f"{controler.get_counters()}".replace("'", "").replace("{", "").replace("}", "")
+                )
             elif args.c:
                 controler.drop()
                 log.info(f"all status cleared in {memory_store_location}")
@@ -98,12 +123,13 @@ def main() -> int:
                     controler.process(file)
                     controler.get_counters()
 
-        log.info(f"{controler.get_counters()}".replace("'","").replace('{',"").replace('}',""))
+        log.info(f"{controler.get_counters()}".replace("'", "").replace("{", "").replace("}", ""))
         return 0
 
     except Exception as e:
         log.error(f"{e}")
         return 1
+
 
 if __name__ == "__main__":
     main()
