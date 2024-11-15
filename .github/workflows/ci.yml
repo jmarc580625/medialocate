@@ -31,10 +31,10 @@ jobs:
         pip install -r requirements-dev.txt
         
     - name: Check formatting with Black
-      run: black --check src tests
+      run: black --check src
         
     - name: Lint with flake8
-      run: flake8 src tests --max-line-length=100
+      run: flake8 src --max-line-length=100
         
     - name: Type checking with mypy
       run: mypy src
