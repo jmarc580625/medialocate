@@ -1,7 +1,7 @@
 // Converts measure from degree to radian
 function degreeToRadian(degrees) {
   return degrees * Math.PI / 180;
-};      
+};
 
 // Converts measure from radian to degree
 function radianToDegree(radians) {
@@ -31,8 +31,8 @@ function getDistance(origin, destination){
   var dLon = degreeToRadian(destination.longitude-origin.longitude);
 
   var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-          Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(degreeToRadian(origin.latitude)) * Math.cos(degreeToRadian(destination.latitude)); 
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+          Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(degreeToRadian(origin.latitude)) * Math.cos(degreeToRadian(destination.latitude));
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   return earthRadiusKm * c;
 }
 
@@ -46,7 +46,7 @@ gpsNothPole         = {latitude:90,         longitude:0};
 gpsSouthPole        = {latitude:-90,        longitude:0};
 console.log("checks distance is nul: "+getDistance(gpsGreenWichEquator,gpsGreenWichEquator));
 console.log("checks distance is nul: "+getDistance(gpsGreenWichCity,gpsGreenWichCity));
-console.log("checks distance is 5918.185064088764: "+getDistance(gpsGreenWichCity, gpsAlexandria)); 
+console.log("checks distance is 5918.185064088764: "+getDistance(gpsGreenWichCity, gpsAlexandria));
 console.log("distance from Kansas City to St Louis (382,901 kilometers) : "+getDistance(gpsKansasCity, gpsStLouis));
 console.log("bearing angle from Kansas City to St Louis (96.513°) : "+getBearing(gpsKansasCity, gpsStLouis));
 console.log("bearing angle from Greenwich equator to noth pole (0°) : "+getBearing(gpsGreenWichEquator, gpsNothPole));
@@ -55,7 +55,7 @@ console.log("bearing angle from Greenwich equator to south pole (180°) : "+getB
 
 Tour Eiffel = 48.8583573655146, 2.2943976077605215
 Arc de Triomphe = 48.873772665953275, 2.295011556033665
-place de la Bastille = 48.853158362623056, 2.369119922346588 
+place de la Bastille = 48.853158362623056, 2.369119922346588
 Moulin rouge = 48.88414406517008, 2.3322587941431605
 Grande Arche de la Défense = 48.892553697408204, 2.2358913961612084
 Champs de Mars = 48.85610796211571, 2.297870751726531

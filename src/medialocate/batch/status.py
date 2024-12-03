@@ -1,5 +1,4 @@
 import time
-import pathlib
 from enum import Enum
 from typing import Iterator, ClassVar, Dict, Any, List, Optional
 from medialocate.store.dict import DictStore
@@ -34,13 +33,13 @@ class ProcessingStatus:
     }
 
     # instance attributes
-    store: DictStore  # remanent storage manager
-    key: str  # hash of the file name
-    filename: str  # name of the file (immutable)
-    state: State  # state of the file processing, take a value among ProcessingStatus.State (mutable)
-    time: float  # last modification time of the ProcessingStatus (self calculated)
-    _isNew: bool  # indicates if ProcessingStatus is a new one
-    _isUpdated: bool  # indicates if ProcessingStatus has been modified since its creation or its retrieval
+    store: DictStore  # storage manager
+    key: str  # file name hash
+    filename: str  # file name (immutable)
+    state: State  # file processing state
+    time: float  # last modification time
+    _isNew: bool  # indicates new ProcessingStatus
+    _isUpdated: bool  # indicates modified ProcessingStatus
 
     def __init__(
         self,
@@ -70,7 +69,7 @@ class ProcessingStatus:
         store: DictStore,
         key: str,
     ) -> Optional["ProcessingStatus"]:
-        dict_data = store.getItem(key)
+        dict_data = store.get(key)
         if dict_data:
             status = cls(
                 store,
@@ -101,7 +100,7 @@ class ProcessingStatus:
 
     @classmethod
     def deleteAll(cls, store: DictStore) -> None:
-        store.drop()
+        store.clear()
 
     # instance methods
 
@@ -120,12 +119,12 @@ class ProcessingStatus:
 
     def delete(self) -> None:
         if not self._isNew:
-            self.store.popItem(self.key)
+            self.store.pop(self.key)
 
     def update(self) -> None:
         if self._isUpdated or self._isNew:
             self.time = time.time()
-            self.store.updateItem(
+            self.store.set(
                 self.key,
                 {
                     self._state_key: self.state.value,

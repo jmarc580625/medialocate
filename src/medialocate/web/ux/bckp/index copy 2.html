@@ -46,7 +46,7 @@
           xmlhttp.onload = function() {
             medialocate_data_dir = this.responseText;
             console.log('medialocate_data_dir = ' + medialocate_data_dir);
-          }          
+          }
           xmlhttp.open("GET", "/api/dir");
           xmlhttp.send();
         }
@@ -152,13 +152,13 @@
                 }
             }
         };
-        
+
         let viewport = document.getElementsByClassName('left')[0];
         viewport.addEventListener('scroll', loadImagesLazily);
         viewport.addEventListener('resize', loadImagesLazily);
         loadImagesLazily();
     });
-    
+
     gpsOrigin = {latitude:0, longitude:0};
     gpsNotreDameDeParis = {latitude:48.853,longitude:2.35};
     GPSRef = gpsOrigin;

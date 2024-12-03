@@ -1,138 +1,122 @@
+"""Unit tests for the DictStore class."""
+
 import os
 import json
 import shutil
-import unittest
 import tempfile
+import unittest
+from typing import Dict, Any
+
 from medialocate.store.dict import DictStore
 
 
-class TestStore(unittest.TestCase):
-    def setUp(self):
-        self.working_directory = tempfile.mkdtemp()
-        self.store_path = os.path.join(self.working_directory, "store")
-        self.store_filename = "test.json"
-        self.store_file = os.path.join(self.store_path, self.store_filename)
+class TestDictStore(unittest.TestCase):
+    """Test suite for DictStore class."""
 
-        os.makedirs(self.store_path)
+    def setUp(self) -> None:
+        """Set up test environment."""
+        self.store_dir = tempfile.mkdtemp()
+        self.store_name = "test_store.json"
+        self.store_path = os.path.join(self.store_dir, self.store_name)
 
-    def tearDown(self):
-        shutil.rmtree(self.working_directory)
+    def tearDown(self) -> None:
+        """Clean up test environment."""
+        shutil.rmtree(self.store_dir, ignore_errors=True)
 
-    """
-    __init__ unit tests
-    """
-
-    def test_init(self):
+    def test_init_creates_empty_store(self) -> None:
+        """Test DictStore initialization with non existing store file"""
         # Arrange
-        pass
+        self.assertFalse(os.path.exists(self.store_path))
 
         # Act
-        pm = DictStore(self.store_path, self.store_filename)
+        store = DictStore(self.store_dir, self.store_name)
 
         # Assert
-        self.assertEqual(pm.directory, self.store_path)
-        self.assertEqual(pm.touched, False)
-        self.assertEqual(pm.opened, False)
-        self.assertEqual(pm.data, None)
+        self.assertFalse(os.path.exists(self.store_path))
+        self.assertFalse(store._is_open)
+        self.assertEqual(store._store, {})
 
-    """
-    open unit tests
-    """
-
-    def test_open_with_non_existing_store_directory(self):
+    def test_init_with_non_existing_directory(self) -> None:
+        """Test DictStore initialization with non existing directory"""
         # Arrange
         store_dirname = "donotexist"
-        non_existent_directory = os.path.join(self.working_directory, store_dirname)
-        store_file = os.path.join(non_existent_directory, self.store_filename)
-        pm = DictStore(non_existent_directory, self.store_filename)
+        non_existent_directory = os.path.join(self.store_dir, store_dirname)
+        store_file = os.path.join(non_existent_directory, "test.json")
+        self.assertFalse(os.path.exists(store_file))
 
         # Act
-        pm.open()
+        with self.assertRaises(FileNotFoundError):
+            store = DictStore(non_existent_directory, self.store_name)
+
+    def test_open_with_non_existing_store_file(self) -> None:
+        """Test open with non existing store file"""
+        # Arrange
+        self.assertFalse(os.path.exists(self.store_path))
+        store = DictStore(self.store_dir, self.store_name)
+
+        # Act
+        store.open()
 
         # Assert
-        self.assertEqual(os.path.exists(non_existent_directory), True)
-        self.assertEqual(os.path.exists(store_file), True)
-        self.assertEqual(pm.data, {})
-        with open(store_file, "r") as f:
-            self.assertEqual(len(json.load(f)), 0)
+        self.assertFalse(os.path.exists(self.store_path))
+        self.assertTrue(store._is_open)
+        self.assertEqual(store._store, {})
 
     def test_open_with_existing_store_file(self):
+        """Test open with existing store file"""
         # Arrange
-        pm = DictStore(self.store_path, self.store_filename)
+        dict = {"key1": "value1", "key2": "value2", "key3": "value3"}
+        with open(self.store_path, "w") as f:
+            json.dump(dict, f)
+        store = DictStore(self.store_dir, self.store_name)
 
         # Act
-        pm.open()
+        store.open()
 
         # Assert
-        self.assertEqual(os.path.exists(self.store_file), True)
-        self.assertEqual(pm.data, {})
-        with open(self.store_file, "r") as f:
-            self.assertEqual(len(json.load(f)), 0)
+        self.assertEqual(os.path.exists(self.store_path), True)
+        self.assertEqual(store._store, dict)
 
     def test_open_with_existing_empty_store_file(self):
+        """Test open with existing empty store file"""
         # Arrange
-        with open(self.store_file, "w") as f:
-            json.dump({}, f)
-        pm = DictStore(self.store_path, self.store_filename)
+        with open(self.store_path, "w") as f:
+            f.write("")
+        store = DictStore(self.store_dir, self.store_name)
 
         # Act
-        pm.open()
-
-        # Assert
-        self.assertEqual(pm.data, {})
+        with self.assertRaises(ValueError):
+            store.open()
 
     def test_open_with_malformed_store_file_content(self):
+        """Test open with malformed store file content"""
         # Arrange
-        with open(self.store_file, "w") as f:
-            f.write('{"key1": "value1", "key2": "value2", "key3":')
-        pm = DictStore(self.store_path, self.store_filename)
+        str = '"key1": "value1", "key2": "value2", "key3":}'
+        with open(self.store_path, "w") as f:
+            f.write(str)
+        store = DictStore(self.store_dir, self.store_name)
 
         # Act & Assert
         with self.assertRaises(Exception):
-            pm.open()
+            store.open()
 
-    def test_open_with_existing_non_empty_store_file(self):
+    def test_update_item_with_non_existing_store_file(self):
+        """Test update item with non existing store file"""
         # Arrange
         item1_key = "key1"
         item1_value = {"value": "value1"}
-        item2_key = "key2"
-        item2_value = {"value": "value2"}
-        item3_key = "key3"
-        item3_value = {"value": "value3"}
-        data = {item1_key: item1_value, item2_key: item2_value, item3_key: item3_value}
-        with open(self.store_file, "w") as f:
-            json.dump(data, f)
-        pm = DictStore(self.store_path, self.store_filename)
+        store = DictStore(self.store_dir, self.store_name)
+        store.open()
 
         # Act
-        pm.open()
+        store.set(item1_key, item1_value)
 
         # Assert
-        self.assertEqual(pm.data, data)
+        self.assertEqual(store._touched, True)
+        self.assertEqual(store._store[item1_key], item1_value)
 
-    """
-    updateItem unit tests
-    """
-
-    def test_updateItem_with_non_existing_store_file(self):
-        # Arrange
-        item1_key = "key1"
-        item1_value = {"value": "value1"}
-        item2_key = "key2"
-        item2_value = {"value": "value2"}
-        pm = DictStore(self.store_path, self.store_filename)
-        pm.open()
-
-        # Act
-        pm.updateItem(item1_key, item1_value)
-        pm.updateItem(item2_key, item2_value)
-
-        # Assert
-        self.assertEqual(pm.touched, True)
-        self.assertEqual(pm.data[item1_key], item1_value)
-        self.assertEqual(pm.data[item2_key], item2_value)
-
-    def test_updateItem_with_existing_store_file(self):
+    def test_update_item_with_existing_store_file(self):
+        """Test update item with existing store file"""
         # Arrange
         item1_key = "key1"
         item1_value = {"value": "value1"}
@@ -141,21 +125,22 @@ class TestStore(unittest.TestCase):
         item3_key = "key3"
         item3_value = {"value": "value3"}
         data = {item1_key: item1_value, item2_key: item2_value}
-        with open(self.store_file, "w") as f:
+        with open(self.store_path, "w") as f:
             json.dump(data, f)
-        pm = DictStore(self.store_path, self.store_filename)
-        pm.open()
+        store = DictStore(self.store_dir, self.store_name)
+        store.open()
 
         # Act
-        pm.updateItem(item3_key, item3_value)
+        store.set(item3_key, item3_value)
 
         # Assert
-        self.assertEqual(pm.data[item1_key], item1_value)
-        self.assertEqual(pm.data[item2_key], item2_value)
-        self.assertEqual(pm.data[item3_key], item3_value)
-        self.assertEqual(pm.touched, True)
+        self.assertEqual(store._store[item1_key], item1_value)
+        self.assertEqual(store._store[item2_key], item2_value)
+        self.assertEqual(store._store[item3_key], item3_value)
+        self.assertEqual(store._touched, True)
 
-    def test_updateItem_twice_with_existing_store_file(self):
+    def test_update_item_twice_with_existing_store_file(self):
+        """Test update item twice with existing store file"""
         # Arrange
         item1_key = "key1"
         item1_value = {"value": "value1"}
@@ -163,49 +148,47 @@ class TestStore(unittest.TestCase):
         item2_value = {"value": "value2"}
         item3_key = "key3"
         item3_value = {"value": "value3"}
-        item3_valueX = {"value": "value3X"}
-        item3_valueY = {"value": "value3Y"}
+        item3_value_x = {"value": "value3X"}
+        item3_value_y = {"value": "value3Y"}
         data = {item1_key: item1_value, item2_key: item2_value}
-        with open(self.store_file, "w") as f:
+        with open(self.store_path, "w") as f:
             json.dump(data, f)
-        pm = DictStore(self.store_path, self.store_filename)
-        pm.open()
+        store = DictStore(self.store_dir, self.store_name)
+        store.open()
 
         # Act
-        pm.updateItem(item3_key, item3_valueX)
-        pm.updateItem(item3_key, item3_valueY)
+        store.set(item3_key, item3_value_x)
+        store.set(item3_key, item3_value_y)
 
         # Assert
-        self.assertEqual(pm.data[item1_key], item1_value)
-        self.assertEqual(pm.data[item2_key], item2_value)
-        self.assertEqual(pm.data[item3_key], item3_valueY)
-        self.assertEqual(pm.touched, True)
-
-    """
-    commit unit tests
-    """
+        self.assertEqual(store._store[item1_key], item1_value)
+        self.assertEqual(store._store[item2_key], item2_value)
+        self.assertEqual(store._store[item3_key], item3_value_y)
+        self.assertEqual(store._touched, True)
 
     def test_commit_without_update(self):
+        """Test commit without update"""
         # Arrange
         item1_key = "key1"
         item1_value = {"value": "value1"}
         item2_key = "key2"
         item2_value = {"value": "value2"}
         data = {item1_key: item1_value, item2_key: item2_value}
-        with open(self.store_file, "w") as f:
+        with open(self.store_path, "w") as f:
             json.dump(data, f)
-        time_before = os.path.getmtime(self.store_file)
-        pm = DictStore(self.store_path, self.store_filename)
-        pm.open()
+        time_before = os.path.getmtime(self.store_path)
+        store = DictStore(self.store_dir, self.store_name)
+        store.open()
 
         # Act
-        pm.commit()
+        store.sync()
 
         # Assert
-        self.touched = False
-        self.assertEqual(os.path.getmtime(self.store_file), time_before)
+        self.assertEqual(store._touched, False)
+        self.assertEqual(os.path.getmtime(self.store_path), time_before)
 
     def test_commit_with_update(self):
+        """Test commit with update"""
         # Arrange
         item1_key = "key1"
         item1_value = {"value": "value1"}
@@ -219,50 +202,44 @@ class TestStore(unittest.TestCase):
             item2_key: item2_value,
             item3_key: item3_value,
         }
-        with open(self.store_file, "w") as f:
+        with open(self.store_path, "w") as f:
             json.dump(data_before, f)
-        time_before = os.path.getmtime(self.store_file)
-        pm = DictStore(self.store_path, self.store_filename)
-        pm.open()
+        time_before = os.path.getmtime(self.store_path)
+        store = DictStore(self.store_dir, self.store_name)
+        store.open()
 
         # Act
-
-        pm.updateItem(item3_key, item3_value)
-        pm.commit()
+        store.set(item3_key, item3_value)
+        store.sync()
 
         # Assert
-        self.touched = False
-        self.assertNotEqual(os.path.getmtime(self.store_file), time_before)
-        with open(self.store_file, "r") as f:
+        self.assertEqual(store._touched, False)
+        self.assertNotEqual(os.path.getmtime(self.store_path), time_before)
+        with open(self.store_path, "r") as f:
             self.assertEqual(json.load(f), data_after)
 
-    """
-    drop unit tests
-    """
-
-    def test_drop(self):
+    def test_clear(self):
+        """Test clear"""
         # Arrange
         item1_key = "key1"
         item1_value = {"value": "value1"}
         item2_key = "key2"
         item2_value = {"value": "value2"}
         data = {item1_key: item1_value, item2_key: item2_value}
-        with open(self.store_file, "w") as f:
+        with open(self.store_path, "w") as f:
             json.dump(data, f)
-        time_before = os.path.getmtime(self.store_file)
-        pm = DictStore(self.store_path, self.store_filename)
+        time_before = os.path.getmtime(self.store_path)
+        store = DictStore(self.store_dir, self.store_name)
+        store.open()
 
         # Act
-        pm.drop()
+        store.clear()
 
         # Assert
-        self.assertEqual(pm.data, {})
+        self.assertEqual(store._store, {})
 
-    """
-    popItem unit tests
-    """
-
-    def test_popItem_with_existing_item(self):
+    def test_pop_item_with_existing_item(self):
+        """Test pop item with existing item"""
         # Arrange
         item1_key = "key1"
         item1_value = {"value": "value1"}
@@ -276,20 +253,21 @@ class TestStore(unittest.TestCase):
             item3_key: item3_value,
         }
         data_after = {item1_key: item1_value, item3_key: item3_value}
-        with open(self.store_file, "w") as f:
+        with open(self.store_path, "w") as f:
             json.dump(data_before, f)
-        pm = DictStore(self.store_path, self.store_filename)
-        pm.open()
+        store = DictStore(self.store_dir, self.store_name)
+        store.open()
 
         # Act
-        val = pm.popItem(item2_key)
+        val = store.pop(item2_key)
 
         # Assert
         self.assertEqual(val, item2_value)
-        self.assertEqual(pm.touched, True)
-        self.assertEqual(pm.data, data_after)
+        self.assertEqual(store._touched, True)
+        self.assertEqual(store._store, data_after)
 
-    def test_popItem_with_non_existing_item(self):
+    def test_pop_item_with_non_existing_item(self):
+        """Test pop item with non existing item"""
         # Arrange
         item1_key = "key1"
         item1_value = {"value": "value1"}
@@ -297,24 +275,43 @@ class TestStore(unittest.TestCase):
         item3_key = "key3"
         item3_value = {"value": "value3"}
         data = {item1_key: item1_value, item3_key: item3_value}
-        with open(self.store_file, "w") as f:
+        with open(self.store_path, "w") as f:
             json.dump(data, f)
-        pm = DictStore(self.store_path, self.store_filename)
-        pm.open()
+        store = DictStore(self.store_dir, self.store_name)
+        store.open()
 
         # Act
-        val = pm.popItem(item2_key)
+        val = store.pop(item2_key)
 
         # Assert
         self.assertEqual(val, None)
-        self.assertEqual(pm.touched, False)
-        self.assertEqual(pm.data, data)
+        self.assertEqual(store._touched, False)
+        self.assertEqual(store._store, data)
 
-    """
-    getItem unit tests
-    """
+    def test_get_item_with_non_existing_item(self):
+        """Test get item with non existing item"""
+        # Arrange
+        item1_key = "key1"
+        item1_value = {"value": "value1"}
+        item2_key = "key2"
+        item3_key = "key3"
+        item3_value = {"value": "value3"}
+        data = {item1_key: item1_value, item3_key: item3_value}
+        with open(self.store_path, "w") as f:
+            json.dump(data, f)
+        store = DictStore(self.store_dir, self.store_name)
+        store.open()
 
-    def test_getItem_with_existing_item(self):
+        # Act
+        val = store.pop(item2_key)
+
+        # Assert
+        self.assertEqual(val, None)
+        self.assertEqual(store._touched, False)
+        self.assertEqual(store._store, data)
+
+    def test_get_item_with_existing_item(self):
+        """Test get item with existing item"""
         # Arrange
         item1_key = "key1"
         item1_value = {"value": "value1"}
@@ -323,45 +320,21 @@ class TestStore(unittest.TestCase):
         item3_key = "key3"
         item3_value = {"value": "value3"}
         data = {item1_key: item1_value, item2_key: item2_value, item3_key: item3_value}
-        with open(self.store_file, "w") as f:
+        with open(self.store_path, "w") as f:
             json.dump(data, f)
-        pm = DictStore(self.store_path, self.store_filename)
-        pm.open()
+        store = DictStore(self.store_dir, self.store_name)
+        store.open()
 
         # Act
-        val = pm.getItem(item2_key)
+        val = store.get(item2_key)
 
         # Assert
         self.assertEqual(val, item2_value)
-        self.assertEqual(pm.touched, False)
-        self.assertEqual(pm.data, data)
+        self.assertEqual(store._touched, False)
+        self.assertEqual(store._store, data)
 
-    def test_getItem_with_non_existing_item(self):
-        # Arrange
-        item1_key = "key1"
-        item1_value = {"value": "value1"}
-        item2_key = "key2"
-        item3_key = "key3"
-        item3_value = {"value": "value3"}
-        data = {item1_key: item1_value, item3_key: item3_value}
-        with open(self.store_file, "w") as f:
-            json.dump(data, f)
-        pm = DictStore(self.store_path, self.store_filename)
-        pm.open()
-
-        # Act
-        val = pm.popItem(item2_key)
-
-        # Assert
-        self.assertEqual(val, None)
-        self.assertEqual(pm.touched, False)
-        self.assertEqual(pm.data, data)
-
-    """
-    items unit tests
-    """
-
-    def test_getItem_with_existing_item(self):
+    def test_get_all_items_with_existing_item2(self):
+        """Test get item with existing item"""
         # Arrange
         item1_key = "key1"
         item1_value = {"value": "value1"}
@@ -374,55 +347,49 @@ class TestStore(unittest.TestCase):
         expected_values = [item1_value, item2_value, item3_value]
         actual_keys = []
         actual_values = []
-        with open(self.store_file, "w") as f:
+        with open(self.store_path, "w") as f:
             json.dump(data, f)
-        pm = DictStore(self.store_path, self.store_filename)
-        pm.open()
+        store = DictStore(self.store_dir, self.store_name)
+        store.open()
 
         # Act
-        for key, val in pm.items():
+        for key, val in store.items():
             actual_keys.append(key)
             actual_values.append(val)
 
         # Assert
-        self.assertEqual(pm.touched, False)
+        self.assertEqual(store._touched, False)
         self.assertEqual(actual_keys, expected_keys)
         self.assertEqual(actual_values, expected_values)
 
-    """
-    unit tests with closed store
-    """
-
-    def test_open_with_closed_store(self):
+    def test_actions_with_closed_store(self):
+        """Test actions with closed store"""
         # Arrange
-        pm = DictStore(self.store_path, self.store_filename)
+        store = DictStore(self.store_dir, self.store_name)
 
         # Act & Assert
-        with self.assertRaises(Exception):
-            pm.commit()
+        with self.assertRaises(DictStore.StoreNotOpenError):
+            store.sync()
 
-        with self.assertRaises(Exception):
-            pm.updateItem("key", {"value": "value"})
+        with self.assertRaises(DictStore.StoreNotOpenError):
+            store.set("key", {"value": "value"})
 
-        with self.assertRaises(Exception):
-            rec = pm.getItem("key")
+        with self.assertRaises(DictStore.StoreNotOpenError):
+            rec = store.get("key")
 
-        with self.assertRaises(Exception):
-            rec = pm.popItem("key")
+        with self.assertRaises(DictStore.StoreNotOpenError):
+            rec = store.pop("key")
 
-        with self.assertRaises(Exception):
-            for key, val in pm.items():
+        with self.assertRaises(DictStore.StoreNotOpenError):
+            for key, val in store.items():
                 pass
 
-    """
-    "with" usage unit tests
-    """
-
-    def test_open_with_closed_store(self):
+    def test_with_usage(self):
+        """Test "with" usage"""
         # Arrange
         item1_key = "key1"
         item1_value = {"value": "value1"}
-        item1_valueX = {"value": "valueX"}
+        item1_value_x = {"value": "valueX"}
         item2_key = "key2"
         item2_value = {"value": "value2"}
         item3_key = "key3"
@@ -432,55 +399,45 @@ class TestStore(unittest.TestCase):
             item2_key: item2_value,
             item3_key: item3_value,
         }
-        expected_data = {item1_key: item1_valueX, item3_key: item3_value}
+        expected_data = {item1_key: item1_value_x, item3_key: item3_value}
 
-        with open(self.store_file, "w") as f:
+        with open(self.store_path, "w") as f:
             json.dump(initial_data, f)
 
         # Act
-        with DictStore(self.store_path, self.store_filename) as pm:
-            for key, val in pm.items():
+        with DictStore(self.store_dir, self.store_name) as store:
+            for key, val in store.items():
                 pass
-            pm.updateItem(item1_key, item1_valueX)
-            pm.popItem(item2_key)
+            store.set(item1_key, item1_value_x)
+            store.pop(item2_key)
 
         # Assert
-        self.assertEqual(pm.opened, False)
-        with open(self.store_file, "r") as f:
+        self.assertEqual(store._is_open, False)
+        with open(self.store_path, "r") as f:
             self.assertEqual(json.load(f), expected_data)
 
-    """
-    object_to_dict unit tests
-    """
-
     def test_object_to_dict(self):
+        """Test object_to_dict"""
         # TODO: implement
         # Arrange
         # Act
         # Assert
         pass
-
-    """
-    size unit tests
-    """
 
     def test_size(self):
-        # TODO: implement
+        """Test size"""
         # Arrange
-        # Act
-        # Assert
-        pass
+        dict = {"key1": "value1", "key2": "value2", "key3": "value3"}
+        with open(self.store_path, "w") as f:
+            json.dump(dict, f)
+        store = DictStore(self.store_dir, self.store_name)
+        store.open()
 
-    """
-    is_touched unit tests
-    """
-
-    def test_is_touched(self):
-        # TODO: implement
-        # Arrange
         # Act
+        size = len(store)
+
         # Assert
-        pass
+        self.assertEqual(size, 3)
 
 
 if __name__ == "__main__":

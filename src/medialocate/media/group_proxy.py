@@ -12,6 +12,7 @@ from medialocate.media.parameters import (
 from medialocate.location.gps import GPS
 from medialocate.media.location_grouping import MediaGroups
 
+
 class Proxy:
     proxy_threshold: float
     proxy_matches: List[Tuple[GPS, List[GPS]]]
@@ -48,9 +49,10 @@ class Proxy:
             timestamp=d["last_update"],
         )
 
+
 class MediaProxies:
-    #TODO: refresh proxies when gps list changes (remember last gps list update)
-    
+    # TODO: refresh proxies when gps list changes (remember last gps list update)
+
     label: str
     proxies: Dict[str, Proxy]
     group_locations: List[GPS]
@@ -77,8 +79,7 @@ class MediaProxies:
         return MediaProxies(
             d["label"],
             proxies={
-                label: Proxy.fromDict(proxy)
-                for label, proxy in d["proxies"].items()
+                label: Proxy.fromDict(proxy) for label, proxy in d["proxies"].items()
             },
         )
 
@@ -88,12 +89,16 @@ class MediaProxies:
         proxy_threshold: float,
         gps_list: List[GPS],
         last_update: float,
-        force : float = False,
+        force: float = False,
     ) -> int:
         if label == self.label:
             return -2  # no proxy for self
         else:
-            if label in self.proxies and last_update < self.proxies[label].last_update and not force:
+            if (
+                label in self.proxies
+                and last_update < self.proxies[label].last_update
+                and not force
+            ):
                 return -1  # gps list unmodified since last proxy search
 
         proxy = Proxy(proxy_threshold)
@@ -182,7 +187,9 @@ class MediaProxiesControler:
             return True
         return False
 
-    def find_proxies(self, groups_path: str, proxy_threshold: float, force : bool = False) -> int:
+    def find_proxies(
+        self, groups_path: str, proxy_threshold: float, force: bool = False
+    ) -> int:
         if self.proxies is None:
             return 0
 

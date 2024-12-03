@@ -74,7 +74,6 @@ def locate_media(
                 with ActionControler(
                     working_dir,
                     action=media_action,
-                    action_is_shell=False,
                     force_option=force_option,
                 ) as controler:
                     for file in finder.find():

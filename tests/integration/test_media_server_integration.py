@@ -32,34 +32,34 @@ from medialocate.web.media_server import (
     MEDIASERVER_SESSION_DIR,
 )
 
+
 class TestMediaServer(unittest.TestCase):
-    #Integration tests for the MediaServer web application
+    # Integration tests for the MediaServer web application
 
     @classmethod
     def setUpClass(cls):
         # Set up logging
         import logging
+
         cls.logger = logging.getLogger("test_media_server")
         cls.logger.setLevel(logging.INFO)
 
     def setUp(self):
-        #Set up test environment before each test
+        # Set up test environment before each test
         # Create a temporary directory structure for testing
         self.test_dir = tempfile.mkdtemp()
-        self.data_dir = os.path.join(self.test_dir, 'data')
+        self.data_dir = os.path.join(self.test_dir, "data")
         os.makedirs(self.data_dir)
 
         # Create some test media files and location data
-        self.create_test_data(self.data_dir, 'album1')
-        self.create_test_data(self.data_dir, 'album2')
+        self.create_test_data(self.data_dir, "album1")
+        self.create_test_data(self.data_dir, "album2")
 
         # Initialize the server
         self.server = MediaServer(
-            port=MEDIASERVER_PORT,
-            data_root_dir=self.data_dir,
-            log=self.logger
+            port=MEDIASERVER_PORT, data_root_dir=self.data_dir, log=self.logger
         )
-        
+
         # Start server in a separate thread
         self.server_thread = threading.Thread(target=self.server.start)
         self.server_thread.daemon = True
@@ -67,17 +67,19 @@ class TestMediaServer(unittest.TestCase):
 
         # Wait for server to start
         import time
+
         time.sleep(1)
 
     def tearDown(self):
-        #Clean up after each test
+        # Clean up after each test
         # Stop the server
         if self.server.httpd:
             self.server.httpd.shutdown()
             self.server.httpd.server_close()
-        
+
         # Remove test directory
         import shutil
+
         shutil.rmtree(self.test_dir)
 
         # Clean up session cache
@@ -86,15 +88,15 @@ class TestMediaServer(unittest.TestCase):
             shutil.rmtree(cache_dir)
 
     def create_test_data(self, data_dir, album_name):
-        #Create test media files and location data
+        # Create test media files and location data
         # Create album directories
         album_dir = os.path.join(data_dir, album_name)
         os.makedirs(album_dir)
 
         # Create media files
-        open(os.path.join(album_dir, 'photo1.jpg'), 'w').close()
-        open(os.path.join(album_dir, 'photo2.jpg'), 'w').close()
-        open(os.path.join(album_dir, 'photo3.jpg'), 'w').close()
+        open(os.path.join(album_dir, "photo1.jpg"), "w").close()
+        open(os.path.join(album_dir, "photo2.jpg"), "w").close()
+        open(os.path.join(album_dir, "photo3.jpg"), "w").close()
 
         # create medialocate directory
         media_dir = os.path.join(album_dir, MEDIALOCATION_DIR)
@@ -102,32 +104,38 @@ class TestMediaServer(unittest.TestCase):
 
         # Create location data
         location_data = {
-            'photo1.jpg': { "gps": { "latitude": 40.7128, "longitude": -74.0060 } },  # New York
-            'photo2.jpg': { "gps": { "latitude": 34.0522, "longitude": -118.2437 } },  # Los Angeles
-            'photo3.jpg': { "gps": { "latitude": 51.5074, "longitude": -0.1278 } },  # London, 
+            "photo1.jpg": {
+                "gps": {"latitude": 40.7128, "longitude": -74.0060}
+            },  # New York
+            "photo2.jpg": {
+                "gps": {"latitude": 34.0522, "longitude": -118.2437}
+            },  # Los Angeles
+            "photo3.jpg": {
+                "gps": {"latitude": 51.5074, "longitude": -0.1278}
+            },  # London,
         }
 
         media_location = {}
         for media_file, location in location_data.items():
             hash = get_hash(media_file)
-            thumbnail_name = hash + '.jpg'
+            thumbnail_name = hash + ".jpg"
             thumbnail_path = os.path.join(MEDIALOCATION_DIR, thumbnail_name)
             thumbnail_fullpath = os.path.join(album_dir, thumbnail_path)
-            with open(thumbnail_fullpath, 'w') as f:
-                f.write(f'<html><body>{media_file} thumbnail</body></html>')
+            with open(thumbnail_fullpath, "w") as f:
+                f.write(f"<html><body>{media_file} thumbnail</body></html>")
             media_desc = {
-                'media': to_posix(media_file),
-                'thumbnail': to_posix(thumbnail_path),
+                "media": to_posix(media_file),
+                "thumbnail": to_posix(thumbnail_path),
                 **location,
             }
             media_location[hash] = media_desc
 
         media_store = os.path.join(media_dir, MEDIALOCATION_STORE_NAME)
-        with open(media_store, 'w') as f:
+        with open(media_store, "w") as f:
             json.dump(media_location, f, indent=2)
 
     def test_server_startup(self):
-        #Test that server starts up correctly
+        # Test that server starts up correctly
         conn = HTTPConnection("localhost", MEDIASERVER_PORT)
         conn.request("GET", "/")
         response = conn.getresponse()
@@ -135,34 +143,34 @@ class TestMediaServer(unittest.TestCase):
         conn.close()
 
     def test_albums_endpoint(self):
-        #Test the /api/albums endpoint
+        # Test the /api/albums endpoint
         conn = HTTPConnection("localhost", MEDIASERVER_PORT)
         conn.request("GET", "/api/media/albums")
         response = conn.getresponse()
         self.assertEqual(response.status, 200)
-        data = json.loads(response.read().decode('utf-8'))
-        self.assertIn('album1', data)
-        self.assertIn('album2', data)
+        data = json.loads(response.read().decode("utf-8"))
+        self.assertIn("album1", data)
+        self.assertIn("album2", data)
         conn.close()
 
     def test_album_endpoint(self):
-        #Test the /api/album endpoint for a specific album
+        # Test the /api/album endpoint for a specific album
         conn = HTTPConnection("localhost", MEDIASERVER_PORT)
         conn.request("GET", "/api/media/album?album1")
         response = conn.getresponse()
         self.assertEqual(response.status, 200)
-        data = response.read().decode('utf-8')
-        self.assertIn('photo1.jpg', data)
-        self.assertIn('photo2.jpg', data)
+        data = response.read().decode("utf-8")
+        self.assertIn("photo1.jpg", data)
+        self.assertIn("photo2.jpg", data)
         conn.close()
-    
+
     def test_proxy_endpoint(self):
-        test_data = b'<html><body>test data</body></html>'
-        test_file = os.path.join(self.data_dir, 'album1', 'test.txt')
-        with open(test_file, 'wb') as f:
+        test_data = b"<html><body>test data</body></html>"
+        test_file = os.path.join(self.data_dir, "album1", "test.txt")
+        with open(test_file, "wb") as f:
             f.write(test_data)
 
-        #Test the proxy endpoint for media files
+        # Test the proxy endpoint for media files
         conn = HTTPConnection("localhost", MEDIASERVER_PORT)
         conn.request("GET", f"/proxy?album1/test.txt")
         response = conn.getresponse()
@@ -171,7 +179,7 @@ class TestMediaServer(unittest.TestCase):
         conn.close()
 
     def test_nonexistent_album(self):
-        #Test requesting a non-existent album
+        # Test requesting a non-existent album
         conn = HTTPConnection("localhost", MEDIASERVER_PORT)
         conn.request("GET", "/api/album?nonexistent")
         response = conn.getresponse()
@@ -179,7 +187,7 @@ class TestMediaServer(unittest.TestCase):
         conn.close()
 
     def test_invalid_proxy_path(self):
-        #Test requesting an invalid proxy path
+        # Test requesting an invalid proxy path
         conn = HTTPConnection("localhost", MEDIASERVER_PORT)
         conn.request("GET", "/proxy?../invalid.jpg")
         response = conn.getresponse()
@@ -187,9 +195,9 @@ class TestMediaServer(unittest.TestCase):
         conn.close()
 
     def test_concurrent_requests(self):
-        #Test handling of concurrent requests
+        # Test handling of concurrent requests
         import concurrent.futures
-        
+
         def make_request():
             conn = HTTPConnection("localhost", MEDIASERVER_PORT)
             try:
@@ -202,38 +210,36 @@ class TestMediaServer(unittest.TestCase):
                 conn.close()
 
         make_request()
-        
+
         # Make 10 concurrent requests
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             futures = [executor.submit(make_request) for _ in range(10)]
             statuses = [f.result() for f in futures]
-        
+
         # All requests should succeed
         for status in statuses:
             self.assertEqual(status, 200)
 
     def test_malformed_requests(self):
-        #Test handling of malformed requests
+        # Test handling of malformed requests
         test_cases = [
             # Missing path parameter
-            ('/api/media/album', 400),
-            # Invalid URL encoding, TODO: needs to check it is actually invalid 
-            ('/api/media/album?%FF', 400),
+            ("/api/media/album", 400),
+            # Invalid URL encoding, TODO: needs to check it is actually invalid
+            ("/api/media/album?%FF", 400),
             # Path traversal attempt
-            ('/api/media/album?../../../etc/passwd', 400),
+            ("/api/media/album?../../../etc/passwd", 400),
             # Very long path
             (f'/api/media/album?{"x" * 1000}', 404),
         ]
-        
+
         conn = HTTPConnection("localhost", MEDIASERVER_PORT)
         for path, expected_status in test_cases:
             try:
                 conn.request("GET", path)
                 response = conn.getresponse()
                 self.assertEqual(
-                    response.status,
-                    expected_status,
-                    f"Failed for path: {path}"
+                    response.status, expected_status, f"Failed for path: {path}"
                 )
                 response.read()  # Need to read the response to free the connection
             except Exception as e:
@@ -243,15 +249,16 @@ class TestMediaServer(unittest.TestCase):
         conn.close()
 
     def test_server_shutdown(self):
-        #Test server shutdown endpoint
+        # Test server shutdown endpoint
         conn = HTTPConnection("localhost", MEDIASERVER_PORT)
         conn.request("GET", "/api/shutdown")
         response = conn.getresponse()
         self.assertEqual(response.status, 200)
         conn.close()
-        
+
         # Try to make another request - should fail
         import time
+
         time.sleep(1)  # Give server time to shut down
         conn = HTTPConnection("localhost", MEDIASERVER_PORT)
         with self.assertRaises(ConnectionRefusedError):
@@ -259,17 +266,18 @@ class TestMediaServer(unittest.TestCase):
             conn.getresponse()
 
     def test_session_cache(self):
-        #Test that session cache is created and used
+        # Test that session cache is created and used
         # Start server to create cache
         self.server.initiate()
-        
+
         # Check that cache file exists
         cache_dir = os.path.join(os.path.expanduser("~"), MEDIASERVER_SESSION_DIR)
         self.assertTrue(os.path.exists(cache_dir))
-        
+
         # Check cache contents
         cache_files = os.listdir(cache_dir)
-        self.assertTrue(any(file.endswith('.json') for file in cache_files))
+        self.assertTrue(any(file.endswith(".json") for file in cache_files))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

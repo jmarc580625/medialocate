@@ -1,6 +1,7 @@
 import unittest
 from medialocate.location.gps import GPS
 
+
 class TestGPS(unittest.TestCase):
     def test_valid_coordinates(self):
         # Test valid coordinate creation
@@ -34,11 +35,11 @@ class TestGPS(unittest.TestCase):
         # Test distance calculation between two points
         point1 = GPS(45.5, -122.6)  # Portland, OR approximate
         point2 = GPS(47.6, -122.3)  # Seattle, WA approximate
-        
+
         # Distance should be approximately 280 km
         distance = point1.distance_to(point2)
         self.assertGreater(distance, 200)  # At least 250 km
-        self.assertLess(distance, 250)     # Less than 300 km
+        self.assertLess(distance, 250)  # Less than 300 km
 
     def test_distance_to_same_point(self):
         # Test distance calculation to same point (should be 0)
@@ -50,7 +51,9 @@ class TestGPS(unittest.TestCase):
         point1 = GPS(0, 0)
         point2 = GPS(0, 180)
         distance = point1.distance_to(point2)
-        self.assertAlmostEqual(distance, 20015.1, delta=0.2)  # Half Earth's circumference in km
+        self.assertAlmostEqual(
+            distance, 20015.1, delta=0.2
+        )  # Half Earth's circumference in km
 
     def test_str_representation(self):
         # Test string representation
@@ -58,5 +61,6 @@ class TestGPS(unittest.TestCase):
         expected_str = "GPS(45.5, -122.6)"
         self.assertEqual(str(gps), expected_str)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

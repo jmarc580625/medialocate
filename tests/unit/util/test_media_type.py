@@ -50,8 +50,21 @@ class TestMediaTypeHelper(unittest.TestCase):
         extensions = MediaTypeHelper.get_expected_extensions()
         # Assert
         expected = [
-            ".3gp", ".avi", ".mkv", ".mov", ".mp4", ".mpeg", ".mpg",
-            ".wmv", ".webm", ".gif", ".jpeg", ".jpg", ".png", ".tiff", ".webp"
+            ".3gp",
+            ".avi",
+            ".mkv",
+            ".mov",
+            ".mp4",
+            ".mpeg",
+            ".mpg",
+            ".wmv",
+            ".webm",
+            ".gif",
+            ".jpeg",
+            ".jpg",
+            ".png",
+            ".tiff",
+            ".webp",
         ]
         self.assertCountEqual(extensions, expected)
 
@@ -60,8 +73,7 @@ class TestMediaTypeHelper(unittest.TestCase):
         for filename in self.movie_files:
             with self.subTest(filename=filename):
                 self.assertEqual(
-                    MediaTypeHelper.get_media_type(filename),
-                    MediaType.MOVIE
+                    MediaTypeHelper.get_media_type(filename), MediaType.MOVIE
                 )
 
     def test_get_media_type_picture_files(self):
@@ -69,8 +81,7 @@ class TestMediaTypeHelper(unittest.TestCase):
         for filename in self.picture_files:
             with self.subTest(filename=filename):
                 self.assertEqual(
-                    MediaTypeHelper.get_media_type(filename),
-                    MediaType.PICTURE
+                    MediaTypeHelper.get_media_type(filename), MediaType.PICTURE
                 )
 
     def test_get_media_type_unknown_files(self):
@@ -78,8 +89,7 @@ class TestMediaTypeHelper(unittest.TestCase):
         for filename in self.unknown_files:
             with self.subTest(filename=filename):
                 self.assertEqual(
-                    MediaTypeHelper.get_media_type(filename),
-                    MediaType.UNKNOWN
+                    MediaTypeHelper.get_media_type(filename), MediaType.UNKNOWN
                 )
 
     def test_get_iana_media_type_movie_files(self):
@@ -99,8 +109,7 @@ class TestMediaTypeHelper(unittest.TestCase):
         for filename, expected in expected_types.items():
             with self.subTest(filename=filename):
                 self.assertEqual(
-                    MediaTypeHelper.get_iana_media_type(filename),
-                    expected
+                    MediaTypeHelper.get_iana_media_type(filename), expected
                 )
 
     def test_get_iana_media_type_picture_files(self):
@@ -117,8 +126,7 @@ class TestMediaTypeHelper(unittest.TestCase):
         for filename, expected in expected_types.items():
             with self.subTest(filename=filename):
                 self.assertEqual(
-                    MediaTypeHelper.get_iana_media_type(filename),
-                    expected
+                    MediaTypeHelper.get_iana_media_type(filename), expected
                 )
 
     def test_get_iana_media_type_unknown_files(self):
@@ -126,8 +134,7 @@ class TestMediaTypeHelper(unittest.TestCase):
         for filename in self.unknown_files:
             with self.subTest(filename=filename):
                 self.assertEqual(
-                    MediaTypeHelper.get_iana_media_type(filename),
-                    "unknown"
+                    MediaTypeHelper.get_iana_media_type(filename), "unknown"
                 )
 
     def test_get_media_type_case_sensitivity(self):
@@ -141,10 +148,7 @@ class TestMediaTypeHelper(unittest.TestCase):
         }
         for filename, expected in test_cases.items():
             with self.subTest(filename=filename):
-                self.assertEqual(
-                    MediaTypeHelper.get_media_type(filename),
-                    expected
-                )
+                self.assertEqual(MediaTypeHelper.get_media_type(filename), expected)
 
     def test_get_media_type_multiple_dots(self):
         # Test files with multiple dots
@@ -155,10 +159,7 @@ class TestMediaTypeHelper(unittest.TestCase):
         }
         for filename, expected in test_cases.items():
             with self.subTest(filename=filename):
-                self.assertEqual(
-                    MediaTypeHelper.get_media_type(filename),
-                    expected
-                )
+                self.assertEqual(MediaTypeHelper.get_media_type(filename), expected)
 
     def test_get_media_type_edge_cases(self):
         # Test edge cases and invalid inputs
@@ -171,10 +172,7 @@ class TestMediaTypeHelper(unittest.TestCase):
         }
         for filename, expected in test_cases.items():
             with self.subTest(filename=filename):
-                self.assertEqual(
-                    MediaTypeHelper.get_media_type(filename),
-                    expected
-                )
+                self.assertEqual(MediaTypeHelper.get_media_type(filename), expected)
 
     def test_get_iana_media_type_case_sensitivity(self):
         # Test case sensitivity in IANA media types
@@ -188,8 +186,7 @@ class TestMediaTypeHelper(unittest.TestCase):
         for filename, expected in test_cases.items():
             with self.subTest(filename=filename):
                 self.assertEqual(
-                    MediaTypeHelper.get_iana_media_type(filename),
-                    expected
+                    MediaTypeHelper.get_iana_media_type(filename), expected
                 )
 
     def test_get_iana_media_type_edge_cases(self):
@@ -206,8 +203,7 @@ class TestMediaTypeHelper(unittest.TestCase):
         for filename, expected in test_cases.items():
             with self.subTest(filename=filename):
                 self.assertEqual(
-                    MediaTypeHelper.get_iana_media_type(filename),
-                    expected
+                    MediaTypeHelper.get_iana_media_type(filename), expected
                 )
 
 

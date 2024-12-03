@@ -39,9 +39,9 @@ def main():
         help="forces grouping even no changes have been made in media location data",
     )
     parser.add_argument(
-        "dirs", 
-        nargs="*", 
-        help="directories to search for media files location data, current directory if empty"
+        "dirs",
+        nargs="*",
+        help="directories to search for media files location data, current directory if empty",
     )
     args = parser.parse_args()
 

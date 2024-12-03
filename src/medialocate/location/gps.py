@@ -6,7 +6,9 @@ class GPS:
     __slots__ = ("latitude_", "longitude_")
 
     def __init__(self, latitude: float, longitude: float) -> None:
-        if not isinstance(latitude, (int, float)) or not isinstance(longitude, (int, float)):
+        if not isinstance(latitude, (int, float)) or not isinstance(
+            longitude, (int, float)
+        ):
             raise TypeError("Latitude and longitude must be numbers")
         if -90 <= latitude <= 90 and -180 <= longitude <= 180:
             self.latitude_ = latitude

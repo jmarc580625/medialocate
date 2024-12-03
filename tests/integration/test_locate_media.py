@@ -21,14 +21,17 @@ from medialocate.location.gps import GPS
 from medialocate.media.locator import MediaLocateAction, MediaType
 from medialocate.util.file_naming import get_hash
 
+
 @dataclass
 class TestMediaFile:
     """Test media file configuration"""
+
     filename: str
     content: bytes = b""  # Optional binary content
     media_type: MediaType = MediaType.PICTURE
     gps_data: Optional[GPS] = None  # GPS coordinates if available
     expected_thumbnail: bool = True  # Whether thumbnail generation should succeed
+
 
 class TestLocateMediaCommand(unittest.TestCase):
     """Integration tests for the locate_media command"""
@@ -36,7 +39,7 @@ class TestLocateMediaCommand(unittest.TestCase):
     def setUp(self):
         """Create test environment with controlled directory structure"""
         self.test_dir = tempfile.mkdtemp()
-        self.media_dir = os.path.join(self.test_dir, 'media')
+        self.media_dir = os.path.join(self.test_dir, "media")
         os.makedirs(self.media_dir)
 
         # Test scenarios
@@ -69,12 +72,13 @@ class TestLocateMediaCommand(unittest.TestCase):
         # Create test files
         for test_file in self.test_files:
             file_path = os.path.join(self.media_dir, test_file.filename)
-            with open(file_path, 'wb') as f:
+            with open(file_path, "wb") as f:
                 f.write(test_file.content)
 
     def tearDown(self):
         """Clean up temporary test directory"""
         import shutil
+
         shutil.rmtree(self.test_dir)
 
     def _mock_gps_data(self, test_file: str) -> Optional[GPS]:
@@ -93,14 +97,14 @@ class TestLocateMediaCommand(unittest.TestCase):
                 if test_case.expected_thumbnail:
                     # Create a dummy thumbnail file
                     os.makedirs(os.path.dirname(output_file), exist_ok=True)
-                    with open(output_file, 'wb') as f:
+                    with open(output_file, "wb") as f:
                         f.write(b"dummy_thumbnail")
                     return True
                 return False
         return False
 
-    @patch('medialocate.media.locator.MediaLocateAction.get_gps_data')
-    @patch('medialocate.media.locator.MediaLocateAction.generate_thumbnail')
+    @patch("medialocate.media.locator.MediaLocateAction.get_gps_data")
+    @patch("medialocate.media.locator.MediaLocateAction.generate_thumbnail")
     def test_basic_media_location(self, mock_thumbnail, mock_gps):
         """Test basic media location with various file types"""
         # Setup mocks
@@ -108,7 +112,7 @@ class TestLocateMediaCommand(unittest.TestCase):
         mock_thumbnail.side_effect = self._mock_thumbnail
 
         # Run locate_media
-        with patch('sys.argv', ['locate_media', self.media_dir]):
+        with patch("sys.argv", ["locate_media", self.media_dir]):
             result = main()
             self.assertEqual(result, 0)
 
@@ -121,19 +125,25 @@ class TestLocateMediaCommand(unittest.TestCase):
             thumb_name = f"{get_hash(test_file.filename)}.jpg"
             thumb_path = os.path.join(media_output_dir, thumb_name)
             if test_file.expected_thumbnail:
-                self.assertTrue(os.path.exists(thumb_path), f"Thumbnail not found for {test_file.filename}")
+                self.assertTrue(
+                    os.path.exists(thumb_path),
+                    f"Thumbnail not found for {test_file.filename}",
+                )
             else:
-                self.assertFalse(os.path.exists(thumb_path), f"Unexpected thumbnail found for {test_file.filename}")
+                self.assertFalse(
+                    os.path.exists(thumb_path),
+                    f"Unexpected thumbnail found for {test_file.filename}",
+                )
 
         # Verify GPS data was properly handled
         data_file = os.path.join(media_output_dir, MEDIALOCATION_STORE_NAME)
         self.assertTrue(os.path.exists(data_file))
-        with open(data_file, 'r') as f:
+        with open(data_file, "r") as f:
             data = json.load(f)
             self.assertIsInstance(data, dict)
 
-    @patch('medialocate.media.locator.MediaLocateAction.get_gps_data')
-    @patch('medialocate.media.locator.MediaLocateAction.generate_thumbnail')
+    @patch("medialocate.media.locator.MediaLocateAction.get_gps_data")
+    @patch("medialocate.media.locator.MediaLocateAction.generate_thumbnail")
     def test_force_regeneration(self, mock_thumbnail, mock_gps):
         # Test force regeneration of thumbnails and location data
         # Setup mocks
@@ -141,16 +151,16 @@ class TestLocateMediaCommand(unittest.TestCase):
         mock_thumbnail.side_effect = self._mock_thumbnail
 
         # First run to create initial files
-        with patch('sys.argv', ['locate_media', self.media_dir]):
+        with patch("sys.argv", ["locate_media", self.media_dir]):
             main()
 
         # Modify a test file to simulate changes
         modified_file = os.path.join(self.media_dir, "photo1.jpg")
-        with open(modified_file, 'wb') as f:
+        with open(modified_file, "wb") as f:
             f.write(b"modified_content")
 
         # Run with force option
-        with patch('sys.argv', ['locate_media', '-f', self.media_dir]):
+        with patch("sys.argv", ["locate_media", "-f", self.media_dir]):
             result = main()
             self.assertEqual(result, 0)
 
@@ -162,8 +172,8 @@ class TestLocateMediaCommand(unittest.TestCase):
                 thumb_path = os.path.join(media_output_dir, thumb_name)
                 self.assertTrue(os.path.exists(thumb_path))
 
-    @patch('medialocate.media.locator.MediaLocateAction.get_gps_data')
-    @patch('medialocate.media.locator.MediaLocateAction.generate_thumbnail')
+    @patch("medialocate.media.locator.MediaLocateAction.get_gps_data")
+    @patch("medialocate.media.locator.MediaLocateAction.generate_thumbnail")
     def test_current_directory_only(self, mock_thumbnail, mock_gps):
         """Test processing only files in the current directory using -d flag"""
         # Setup mocks
@@ -177,7 +187,7 @@ class TestLocateMediaCommand(unittest.TestCase):
             f.write(b"ignored_content")
 
         # Run locate_media with -d flag to process only current directory
-        with patch('sys.argv', ['locate_media', '-d', self.media_dir]):
+        with patch("sys.argv", ["locate_media", "-d", self.media_dir]):
             result = main()
             self.assertEqual(result, 0)
 
@@ -193,8 +203,8 @@ class TestLocateMediaCommand(unittest.TestCase):
                 thumb_path = os.path.join(media_output_dir, thumb_name)
                 self.assertTrue(os.path.exists(thumb_path))
 
-    @patch('medialocate.media.locator.MediaLocateAction.get_gps_data')
-    @patch('medialocate.media.locator.MediaLocateAction.generate_thumbnail')
+    @patch("medialocate.media.locator.MediaLocateAction.get_gps_data")
+    @patch("medialocate.media.locator.MediaLocateAction.generate_thumbnail")
     def test_multiple_directories(self, mock_thumbnail, mock_gps):
         # Test processing multiple directories
         # Setup mocks
@@ -204,11 +214,11 @@ class TestLocateMediaCommand(unittest.TestCase):
         # Create a second directory with media files
         dir2 = os.path.join(self.test_dir, "dir2")
         os.makedirs(dir2)
-        with open(os.path.join(dir2, "extra.jpg"), 'wb') as f:
+        with open(os.path.join(dir2, "extra.jpg"), "wb") as f:
             f.write(b"extra_content")
 
         # Run with multiple directories
-        with patch('sys.argv', ['locate_media', self.media_dir, dir2]):
+        with patch("sys.argv", ["locate_media", self.media_dir, dir2]):
             result = main()
             self.assertEqual(result, 0)
 
@@ -216,5 +226,6 @@ class TestLocateMediaCommand(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(self.media_dir, MEDIALOCATION_DIR)))
         self.assertTrue(os.path.exists(os.path.join(dir2, MEDIALOCATION_DIR)))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

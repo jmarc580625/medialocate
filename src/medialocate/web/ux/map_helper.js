@@ -23,12 +23,12 @@ class MarkerManager {
       window.dispatchEvent(new CustomEvent(MARKER_UNFOCUS_EVENT, {detail: {id: key}}));
     }.bind(marker));
   }
-  
+
   hideGroup(group) {
     console.debug(this.logHelper + 'hide group: ' + group);
     this.map.removeLayer(this.layerGroups[group]);
   }
-  
+
   showGroup(group) {
     console.debug(this.logHelper + 'hide group: ' + group);
     this.map.addLayer(this.layerGroups[group]);
@@ -56,7 +56,7 @@ class MarkerManager {
   }
 
   unfocusFromMarker(key) {
-    console.debug(this.logHelper + 'unfocus from marker: ' + key); 
+    console.debug(this.logHelper + 'unfocus from marker: ' + key);
     var pos = this.markers[key].getLatLng();
     this.markers[key]._icon.classList.remove("markerFocus");
     this.markers[key].setZIndexOffset(0);
@@ -90,11 +90,11 @@ class MapHelper {
   setCenter() {
     console.debug(this.logHelper + 'set center @ latitude: ' + this.center.latitude + ', longitude: ' + this.center.longitude);
     var marker = L.marker([this.center.latitude, this.center.longitude]).addTo(this.map);
-    marker._icon.classList.add("markerOrigin");    
-  }  
+    marker._icon.classList.add("markerOrigin");
+  }
 
   focusToCenter() {
-    console.debug(this.logHelper + 'focus to center @ latitude: ' + this.center.latitude + ', longitude: ' + this.center.longitude + '& zoom: ' + this.zoom); 
+    console.debug(this.logHelper + 'focus to center @ latitude: ' + this.center.latitude + ', longitude: ' + this.center.longitude + '& zoom: ' + this.zoom);
     this.map.setView(new L.LatLng(this.center.latitude, this.center.longitude), this.zoom);
   }
 
@@ -122,7 +122,7 @@ class MapHelper {
   }
 
   unfocusFromMarker(key) {
-    console.debug(this.logHelper + 'unfocus from marker: ' + key); 
+    console.debug(this.logHelper + 'unfocus from marker: ' + key);
     var pos = this.markers[key].getLatLng();
     this.markers[key]._icon.classList.remove("markerFocus");
     this.markers[key].setZIndexOffset(0);
@@ -134,7 +134,7 @@ class MapHelper {
       console.debug('removes marker : ' + key);
       this.map.removeLayer(this.markers[key]);
     }
-  }  
+  }
 }
 
 
@@ -165,11 +165,11 @@ class MapHelper2 {
   setCenter() {
     console.debug(this.logHelper + 'set center @ latitude: ' + this.center.latitude + ', longitude: ' + this.center.longitude);
     var marker = L.marker([this.center.latitude, this.center.longitude]).addTo(this.map);
-    marker._icon.classList.add("markerOrigin");    
-  }  
+    marker._icon.classList.add("markerOrigin");
+  }
 
   focusToCenter() {
-    console.debug(this.logHelper + 'focus to center @ latitude: ' + this.center.latitude + ', longitude: ' + this.center.longitude + '& zoom: ' + this.zoom); 
+    console.debug(this.logHelper + 'focus to center @ latitude: ' + this.center.latitude + ', longitude: ' + this.center.longitude + '& zoom: ' + this.zoom);
     this.map.setView(new L.LatLng(this.center.latitude, this.center.longitude), this.zoom);
   }
 

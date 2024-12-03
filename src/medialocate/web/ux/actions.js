@@ -19,7 +19,7 @@ class ActionController {
         }
         return result;
     }
-}    
+}
 
 /********** MENU CONTROLER **********/
 
@@ -57,7 +57,7 @@ class Menu extends ActionController {
         this.elements.ALBUM_NAME_ID.innerHTML = ""
         window.dispatchEvent(new CustomEvent(ALBUM_CLOSE_EVENT));
     }
-    
+
     exit() {
         console.debug(this.logHeader + ' exiting');
         if (confirm('Are you sure you want to exit?')) {
@@ -90,7 +90,7 @@ class AlbumChooser extends ActionController {
         this.choose_header = "please, choose an album";
         this.list = null;
         try {
-            this.elements = { 
+            this.elements = {
                 ALBUM_CHOOSER_ID : document.getElementById(this.id),
                 ALBUM_CHOOSER_LIST_ID : document.getElementById(ALBUM_CHOOSER_LIST_ID),
                 ALBUM_CHOOSER_HEADER_ID : document.getElementById(ALBUM_CHOOSER_HEADER_ID)//,
@@ -102,12 +102,12 @@ class AlbumChooser extends ActionController {
             window.addEventListener(ALBUM_OPEN_EVENT, function(e) {
                 console.debug(this.logHeader + 'receive message: ' + ALBUM_OPEN_EVENT + ' detail: ' + e.detail.id);
                 this.hide();
-            }.bind(this));            
+            }.bind(this));
         } catch (e) {
             console.debug(this.logHeader + " constructor fail with error:" + e.message);
         }
     }
- 
+
     get() {
         console.debug(this.logHeader + this.id + ' get albums');
         if (! this._assertDivFound()) return;

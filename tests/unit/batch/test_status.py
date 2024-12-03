@@ -6,6 +6,7 @@ from medialocate.batch.status import ProcessingStatus
 
 STORE_DICT = "medialocate.store.dict"
 
+
 class TestProcessingStatus(unittest.TestCase):
     def setUp(self):
         pass
@@ -38,7 +39,7 @@ class TestProcessingStatus(unittest.TestCase):
 
     @patch(f"{STORE_DICT}.DictStore")
     def test_init_Status_instance_without_store(self, StoreMock):
-        """"Test init Status instance without store """
+        """ "Test init Status instance without store"""
         # Act
         storeMock = StoreMock.return_value
         status = ProcessingStatus(storeMock, "key", "status", "filename")
@@ -53,7 +54,7 @@ class TestProcessingStatus(unittest.TestCase):
         self.assertEqual(status._isUpdated, False)
 
     def test_filename_hash_empty_string(self):
-        """"Test filename hash with empty string """
+        """ "Test filename hash with empty string"""
         # Arrange
         # empty filename is converted to Posix path '.' to ensure hash is system independent
         hash = hashlib.md5(".".encode("utf-8")).hexdigest()
@@ -62,7 +63,7 @@ class TestProcessingStatus(unittest.TestCase):
         self.assertEqual(ProcessingStatus.filename_hash(""), hash)
 
     def test_filename_hash_with_ascii_string(self):
-        """"Test filename hash with ascii string """
+        """ "Test filename hash with ascii string"""
         # Arrange
         filename = "hello"
         hash = hashlib.md5(filename.encode("utf-8")).hexdigest()
@@ -71,7 +72,7 @@ class TestProcessingStatus(unittest.TestCase):
         self.assertEqual(ProcessingStatus.filename_hash(filename), hash)
 
     def test_filename_hash_with_non_ascii_string(self):
-        """"Test filename hash with non ascii string """
+        """ "Test filename hash with non ascii string"""
         # Arrange
         filename = "hëllo"
         hash = hashlib.md5(filename.encode("utf-8")).hexdigest()
@@ -80,7 +81,7 @@ class TestProcessingStatus(unittest.TestCase):
         self.assertEqual(ProcessingStatus.filename_hash(filename), hash)
 
     def test_filename_hash_with_special_characters(self):
-        """"Test filename hash with special characters """
+        """ "Test filename hash with special characters"""
         # Arrange
         filename = "hëllo!@#$"
         hash = hashlib.md5(filename.encode("utf-8")).hexdigest()
@@ -89,7 +90,7 @@ class TestProcessingStatus(unittest.TestCase):
         self.assertEqual(ProcessingStatus.filename_hash(filename), hash)
 
     def test_filename_hash_with_long_string(self):
-        """"Test filename hash with long string """
+        """ "Test filename hash with long string"""
         # Arrange
         filename = "a" * 1000
         hash = hashlib.md5(filename.encode("utf-8")).hexdigest()
@@ -98,7 +99,7 @@ class TestProcessingStatus(unittest.TestCase):
         self.assertEqual(ProcessingStatus.filename_hash(filename), hash)
 
     def test_filename_hash_with_posix_and_windows_pathnames(self):
-        """"Test with posix and windows pathnames """
+        """ "Test with posix and windows pathnames"""
         # Arrange
         filename_posix = "hello/happy/taxpayer"
         filename_windows = "hello\\happy\\taxpayer"
@@ -112,7 +113,7 @@ class TestProcessingStatus(unittest.TestCase):
 
     @patch(f"{STORE_DICT}.DictStore")
     def test_getFromStore(self, StoreMock):
-        """"Test getFromStore """
+        """ "Test getFromStore"""
         # Arrange
         key = "key"
         filename = "filename"
@@ -123,7 +124,7 @@ class TestProcessingStatus(unittest.TestCase):
             ProcessingStatus._time_key: now,
         }
         storeMock = StoreMock.return_value
-        storeMock.getItem.return_value = value
+        storeMock.get.return_value = value
 
         # Act
         status = ProcessingStatus.getFromStore(storeMock, key)
@@ -137,7 +138,7 @@ class TestProcessingStatus(unittest.TestCase):
 
     @patch(f"{STORE_DICT}.DictStore")
     def test_getAllFromStore(self, StoreMock):
-        """"Test getAllFromStore """
+        """ "Test getAllFromStore"""
         # Arrange
         key1 = "key1"
         key2 = "key2"
@@ -191,20 +192,20 @@ class TestProcessingStatus(unittest.TestCase):
 
     @patch(f"{STORE_DICT}.DictStore")
     def test_deleteAll(self, StoreMock):
-        """"Test deleteAll """
+        """ "Test deleteAll"""
         # Arrange
         storeMock = StoreMock.return_value
-        storeMock.drop.return_value = None
+        storeMock.clear.return_value = None
 
         # Act
         ProcessingStatus.deleteAll(storeMock)
 
         # Assert
-        storeMock.drop.assert_called_once()
+        storeMock.clear.assert_called_once()
 
     @patch(f"{STORE_DICT}.DictStore")
     def test_getFilename(self, StoreMock):
-        """"Test getFilename """
+        """ "Test getFilename"""
         # Arrange
         storeMock = StoreMock.return_value
         filename = "filename"
@@ -220,7 +221,7 @@ class TestProcessingStatus(unittest.TestCase):
 
     @patch(f"{STORE_DICT}.DictStore")
     def test_getState(self, StoreMock):
-        """"Test getState """
+        """ "Test getState"""
         # Arrange
         storeMock = StoreMock.return_value
         filename = "filename"
@@ -236,7 +237,7 @@ class TestProcessingStatus(unittest.TestCase):
 
     @patch(f"{STORE_DICT}.DictStore")
     def test_getTime(self, StoreMock):
-        """"Test getTime """
+        """ "Test getTime"""
         # Arrange
         storeMock = StoreMock.return_value
         filename = "filename"
@@ -252,7 +253,7 @@ class TestProcessingStatus(unittest.TestCase):
 
     @patch(f"{STORE_DICT}.DictStore")
     def test_update_new(self, StoreMock):
-        """Test update on new store """
+        """Test update on new store"""
         # Arrange
         storeMock = StoreMock.return_value
         filename = "filename"
@@ -264,7 +265,7 @@ class TestProcessingStatus(unittest.TestCase):
         status.update()
 
         # Assert
-        storeMock.updateItem.assert_called_once_with(
+        storeMock.set.assert_called_once_with(
             status.key,
             {
                 ProcessingStatus._state_key: state.value,
@@ -275,7 +276,7 @@ class TestProcessingStatus(unittest.TestCase):
 
     @patch(f"{STORE_DICT}.DictStore")
     def test_update_get_from_store_modified(self, StoreMock):
-        """Test update on modified store """
+        """Test update on modified store"""
         # Arrange
         key = "key"
         filename = "filename"
@@ -286,18 +287,18 @@ class TestProcessingStatus(unittest.TestCase):
             ProcessingStatus._time_key: now,
         }
         storeMock = StoreMock.return_value
-        storeMock.getItem.return_value = value
+        storeMock.get.return_value = value
         status = ProcessingStatus.getFromStore(storeMock, key)
 
         # Act
         status.update()
 
         # Assert
-        storeMock.updateItem.assert_not_called()
+        storeMock.set.assert_not_called()
 
     @patch(f"{STORE_DICT}.DictStore")
     def test_update_get_from_store_unmodified(self, StoreMock):
-        """Test update on unmodified store """
+        """Test update on unmodified store"""
         # Arrange
         key = "key"
         filename = "filename"
@@ -308,7 +309,7 @@ class TestProcessingStatus(unittest.TestCase):
             ProcessingStatus._time_key: now,
         }
         storeMock = StoreMock.return_value
-        storeMock.getItem.return_value = value
+        storeMock.get.return_value = value
         status = ProcessingStatus.getFromStore(storeMock, key)
         status.setState(ProcessingStatus.State.ERROR)
 
@@ -316,7 +317,7 @@ class TestProcessingStatus(unittest.TestCase):
         status.update()
 
         # Assert
-        storeMock.updateItem.assert_called_once_with(
+        storeMock.set.assert_called_once_with(
             status.key,
             {
                 ProcessingStatus._state_key: status.state.value,
@@ -339,7 +340,7 @@ class TestProcessingStatus(unittest.TestCase):
         status.delete()
 
         # Assert
-        storeMock.updateItem.assert_not_called()
+        storeMock.set.assert_not_called()
 
     @patch(f"{STORE_DICT}.DictStore")
     def test_delete_get_from_store_unmodified(self, StoreMock):
@@ -354,14 +355,14 @@ class TestProcessingStatus(unittest.TestCase):
             ProcessingStatus._time_key: now,
         }
         storeMock = StoreMock.return_value
-        storeMock.getItem.return_value = value
+        storeMock.get.return_value = value
         status = ProcessingStatus.getFromStore(storeMock, key)
 
         # Act
         status.delete()
 
         # Assert
-        storeMock.popItem.assert_called_once_with(status.key)
+        storeMock.pop.assert_called_once_with(status.key)
 
 
 if __name__ == "__main__":

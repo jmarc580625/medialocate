@@ -54,7 +54,8 @@ class MediaGroups:
                 )
             except (ValueError, TypeError, KeyError) as e:
                 self.log.warning(
-                    f"Invalid GPS coordinates for media location {location_key}: {e.__class__.__name__} {e}"
+                    "Invalid GPS coordinates for media location "
+                    f"{location_key}: {e.__class__.__name__} {e}"
                 )
                 continue
             groups_found = [

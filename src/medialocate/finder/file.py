@@ -71,17 +71,16 @@ class FileFinder:
             filtered_files = [
                 f
                 for f in files
-                    if not self.extensions or f.lower().endswith(self.extensions)
+                if not self.extensions or f.lower().endswith(self.extensions)
             ]
             filtered_files = [
                 f
                 for f in filtered_files
-                    if self.min_age == 0 or os.path.getmtime(os.path.join(root, f)) > self.min_age
+                if self.min_age == 0
+                or os.path.getmtime(os.path.join(root, f)) > self.min_age
             ]
             filtered_files = [
-                f 
-                for f in filtered_files 
-                    if not self.matches or f in self.matches
+                f for f in filtered_files if not self.matches or f in self.matches
             ]
             self.counters["found"] += len(filtered_files)
 

@@ -24,7 +24,7 @@ class MediaAlbums {
         }
         return true;
     }
- 
+
     get(event) {
         if (! this._assertDivFound()) return;
         console.log('get medias albums');
@@ -300,12 +300,12 @@ class Menu {
             xmlhttp.send();
         }
     }
-    
+
     close() {
         this.div.contentWindow.postMessage('clear', '*');
         console.log('close action from menu');
     }
-    
+
     open() {
         this.div.contentWindow.postMessage('open', '*');
         console.log('close action from menu');

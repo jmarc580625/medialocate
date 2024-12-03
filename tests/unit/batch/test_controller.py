@@ -8,6 +8,7 @@ from medialocate.batch.controler import ActionControler
 
 BATCH_CONTROLER = "medialocate.batch.controler"
 
+
 class TestProcessMemory(unittest.TestCase):
     def setUp(self):
         pass
@@ -30,24 +31,6 @@ class TestProcessMemory(unittest.TestCase):
                 orchestrator = ActionControler(
                     working_directory,
                     action,
-                    action_is_shell=False,
-                )
-
-        # Assert
-        self.assertTrue(callable(orchestrator.action))
-
-    def test_init_with_shell_action(self):
-        # Arrange
-        action = "echo"
-        working_directory = "dummy_directory_name"
-
-        # Act
-        with patch(f"{BATCH_CONTROLER}.ProcessingStatus") as StatusMock:
-            with patch(f"{BATCH_CONTROLER}.DictStore") as StoreMock:
-                orchestrator = ActionControler(
-                    working_directory,
-                    action,
-                    action_is_shell=True,
                 )
 
         # Assert
@@ -66,7 +49,6 @@ class TestProcessMemory(unittest.TestCase):
                 orchestrator = ActionControler(
                     working_directory,
                     myAction,
-                    action_is_shell=True,
                 )
 
         # Assert
@@ -87,7 +69,6 @@ class TestProcessMemory(unittest.TestCase):
                 orchestrator = ActionControler(
                     working_directory,
                     myAction,
-                    action_is_shell=True,
                 )
 
         # Assert
@@ -121,7 +102,7 @@ class TestProcessMemory(unittest.TestCase):
             StatusMock.State.IGNORE = states.IGNORE
             StatusMock.State.ERROR = states.ERROR
             with patch(f"{BATCH_CONTROLER}.DictStore") as StoreMock:
-                StoreMock.return_value.getItem.return_value = None
+                StoreMock.return_value.get.return_value = None
                 orchestrator = ActionControler(
                     working_directory,
                     None,
@@ -352,7 +333,7 @@ class TestProcessMemory(unittest.TestCase):
             StatusMock.State.IGNORE = states.IGNORE
             StatusMock.State.ERROR = states.ERROR
             with patch(f"{BATCH_CONTROLER}.DictStore") as StoreMock:
-                StoreMock.return_value.getItem.return_value = None
+                StoreMock.return_value.get.return_value = None
                 orchestrator = ActionControler(
                     working_directory,
                     ignore_from_action,
@@ -396,7 +377,7 @@ class TestProcessMemory(unittest.TestCase):
             StatusMock.State.IGNORE = states.IGNORE
             StatusMock.State.ERROR = states.ERROR
             with patch(f"{BATCH_CONTROLER}.DictStore") as StoreMock:
-                StoreMock.return_value.getItem.return_value = None
+                StoreMock.return_value.get.return_value = None
                 orchestrator = ActionControler(
                     working_directory,
                     error_from_action,
@@ -431,7 +412,7 @@ class TestProcessMemory(unittest.TestCase):
             ]
             StatusMock.return_value.getFilename.return_value = filename
             with patch(f"{BATCH_CONTROLER}.DictStore") as StoreMock:
-                StoreMock.return_value.getItem.return_value = None
+                StoreMock.return_value.get.return_value = None
                 orchestrator = ActionControler(
                     working_directory,
                     None,
@@ -466,7 +447,7 @@ class TestProcessMemory(unittest.TestCase):
             orchestrator.drop()
 
             # Assert
-            StoreMock.return_value.drop.assert_called_once()
+            StoreMock.return_value.clear.assert_called_once()
 
     """
     ProcessingOrchestrator.get_counters unit tests

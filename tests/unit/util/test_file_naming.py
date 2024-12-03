@@ -61,8 +61,7 @@ class TestFileNaming(unittest.TestCase):
     def test_get_hash_windows_path(self):
         # Arrange
         expected_hash = hashlib.md5(
-            "C:/Users/test/file.txt".encode("utf-8"), 
-            usedforsecurity=False
+            "C:/Users/test/file.txt".encode("utf-8"), usedforsecurity=False
         ).hexdigest()
         # Act
         result = get_hash(self.windows_path)
@@ -72,8 +71,7 @@ class TestFileNaming(unittest.TestCase):
     def test_get_hash_posix_path(self):
         # Arrange
         expected_hash = hashlib.md5(
-            self.posix_path.encode("utf-8"), 
-            usedforsecurity=False
+            self.posix_path.encode("utf-8"), usedforsecurity=False
         ).hexdigest()
         # Act
         result = get_hash(self.posix_path)
@@ -83,8 +81,7 @@ class TestFileNaming(unittest.TestCase):
     def test_get_hash_mixed_path(self):
         # Arrange
         expected_hash = hashlib.md5(
-            "C:/Users/test/file.txt".encode("utf-8"), 
-            usedforsecurity=False
+            "C:/Users/test/file.txt".encode("utf-8"), usedforsecurity=False
         ).hexdigest()
         # Act
         result = get_hash(self.mixed_path)
@@ -200,8 +197,7 @@ class TestFileNaming(unittest.TestCase):
         for path in test_cases:
             with self.subTest(path=path):
                 expected_hash = hashlib.md5(
-                    to_posix(path).encode("utf-8"),
-                    usedforsecurity=False
+                    to_posix(path).encode("utf-8"), usedforsecurity=False
                 ).hexdigest()
                 self.assertEqual(get_hash(path), expected_hash)
 
@@ -211,10 +207,10 @@ class TestFileNaming(unittest.TestCase):
         for path in test_cases:
             with self.subTest(path=path):
                 expected_hash = hashlib.md5(
-                    to_posix(path).encode("utf-8"),
-                    usedforsecurity=False
+                    to_posix(path).encode("utf-8"), usedforsecurity=False
                 ).hexdigest()
                 self.assertEqual(get_hash(path), expected_hash)
+
 
 if __name__ == "__main__":
     unittest.main()

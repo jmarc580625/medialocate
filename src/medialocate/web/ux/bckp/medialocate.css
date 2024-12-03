@@ -4,7 +4,7 @@ img.markerFocus { filter: hue-rotate(260deg); }
 .menu {
   position: absolute;
   left: 0;
-  top: 0; 
+  top: 0;
   width: 50%;
   height : '2px';
   z-index: 1001;
@@ -39,7 +39,7 @@ img.markerFocus { filter: hue-rotate(260deg); }
   left: 50%;
   top: 0;
   bottom: 0;
-  right: 0; 
+  right: 0;
 }
 img {
   display: block;

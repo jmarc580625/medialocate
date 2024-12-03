@@ -1,6 +1,5 @@
 import logging
 import argparse
-import os
 from medialocate.batch.controler import ActionControler
 from medialocate.finder.file import FileFinder
 
@@ -41,8 +40,16 @@ EXAMPLE:
   find . -path ./.mymemory -prune -o -type f -print | processMemory ./.mymemory ls
 """
 
+
 # -------------------------------------------------------------------------------
-def main(memory_store_location: str, action: str, purge_mode: bool, clear_mode: bool, force_option: bool, verbose_level: int, log: logging.Logger) -> int:
+def main(
+    memory_store_location: str,
+    purge_mode: bool,
+    clear_mode: bool,
+    force_option: bool,
+    verbose_level: int,
+    log: logging.Logger,
+) -> int:
     """
     Main entry point for the processMemory script.
 
@@ -73,8 +80,6 @@ def main(memory_store_location: str, action: str, purge_mode: bool, clear_mode: 
     try:
         with ActionControler(
             memory_store_location,
-            action,
-            action_is_shell=True,  # Changed to False for security
             force_option=force_option,
         ) as controler:
             if clear_mode:
@@ -83,8 +88,7 @@ def main(memory_store_location: str, action: str, purge_mode: bool, clear_mode: 
             elif purge_mode:
                 controler.clean()
                 log.info(
-                    f"{controler.get_counters()}"
-                    .replace("'", "")
+                    f"{controler.get_counters()}".replace("'", "")
                     .replace("{", "")
                     .replace("}", "")
                 )
@@ -94,14 +98,12 @@ def main(memory_store_location: str, action: str, purge_mode: bool, clear_mode: 
                     controler.process(file)
 
                 log.info(
-                    f"finder: {finder.get_counters()}"
-                    .replace("'", "")
+                    f"finder: {finder.get_counters()}".replace("'", "")
                     .replace("{", "")
                     .replace("}", "")
                 )
                 log.info(
-                    f"controler: {controler.get_counters()}"
-                    .replace("'", "")
+                    f"controler: {controler.get_counters()}".replace("'", "")
                     .replace("{", "")
                     .replace("}", "")
                 )
@@ -114,44 +116,35 @@ def main(memory_store_location: str, action: str, purge_mode: bool, clear_mode: 
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(
         description="Optimize batch processing of files using a memory directory."
     )
     parser.add_argument(
         "-p",
-        action = "store_true",
-        help = (
+        action="store_true",
+        help=(
             "purge mode, removes any status files which has no corresponding file "
             "and no further file processing is made"
         ),
     )
     parser.add_argument(
-        "-c", 
-        action = "store_true", 
-        help = "clear all status files from memory_directory"
+        "-c", action="store_true", help="clear all status files from memory_directory"
     )
     parser.add_argument(
         "-f",
-        action = "store_true",
-        help = "forces file processing even when status file is newer than its corresponding file",
+        action="store_true",
+        help="forces file processing even when status file is newer than its corresponding file",
     )
     parser.add_argument(
         "-v",
-        action = "count",
-        default = 0,
+        action="count",
+        default=0,
         help="verbose mode, trace progress on standard error",
     )
     parser.add_argument(
         "memory_directory",
-        type = str,
-        help = "directory where to store file processing status",
-    )
-    parser.add_argument(
-        "processing_command",
-        nargs = "?",
-        default = "echo",
-        help = "processing command",
+        type=str,
+        help="directory where to store file processing status",
     )
     args = parser.parse_args()
 
@@ -159,4 +152,11 @@ if __name__ == "__main__":
     log = logging.getLogger("ProcessMemory")
     log.debug(", ".join(f"{arg}={getattr(args, arg)}" for arg in vars(args)))
 
-    main(args.memory_directory, args.processing_command, args.p, args.c, args.f, args.v, log)
+    main(
+        args.memory_directory,
+        args.p,
+        args.c,
+        args.f,
+        args.v,
+        log,
+    )

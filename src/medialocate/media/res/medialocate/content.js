@@ -1,7 +1,7 @@
 /*
-setContent retrieves media description from data tags, extracts media description from their value attribute 
+setContent retrieves media description from data tags, extracts media description from their value attribute
 and sort them according to their location. setContent returns an array of media description structures sorted
-by gps location. 
+by gps location.
 
 parameters:
 - locationData : a json  structure holding media files location data
@@ -27,7 +27,7 @@ Tag's value attribute holds the media description data adhering to the below jso
     "latitude":"64.9500578383333",
     "longitude":"-149.333549994667"
   }
-} 
+}
 
 The sort algorithm relies on both the bearing angle and the distance from the gps reference point toward the media gps location.
 */
@@ -46,13 +46,13 @@ The sort algorithm relies on both the bearing angle and the distance from the gp
         console.log('data element ignored: '+ err.message);
       }
     }
-  
+
     return mediaDescriptions.sort(function sortPosition(pos1, pos2) {
       if (Math.floor(pos1.bearing / bearingRange) > Math.floor(pos2.bearing / bearingRange)) return -1;
       if (Math.floor(pos1.bearing / bearingRange) < Math.floor(pos2.bearing / bearingRange)) return 1;
       return (pos1.distance > pos2.distance ? 1 : -1)
-    }); 
-} 
+    });
+}
 
 /*
 addContent generates html elements based on media descriptions and html template and add those generates html elements
@@ -61,18 +61,18 @@ within a given html container element.
 parameters:
 - conteneur : a html element which can contain childs elements and will receive generated elements
 - template : an html template element used to generate html elements
-- mediaDescription : an array of media description structure (see setContent) holding data used to generate new html elements 
+- mediaDescription : an array of media description structure (see setContent) holding data used to generate new html elements
 
 html generation is based on a template structure which is must comply with the following constraints:
 - element with parent class holds in id             attribute a unique media key
-- element with parent class holds in data-latitude  attribute the media gps latitude 
-- element with parent class holds in data-longitude attribute the media gps longitude 
+- element with parent class holds in data-latitude  attribute the media gps latitude
+- element with parent class holds in data-longitude attribute the media gps longitude
 - element with media class  holds in href           attribute an url toward the media
 - element with child class  holds in src            attribute an url toward the media thumbnail picture
 - element with oms class    holds in href           attribute an url toward an openstreet map address search page based on media gps location
 - element with maps class   holds in href           attribute an url toward an google map page based on media gps location
 
-A template structure example is given below: 
+A template structure example is given below:
  <template>
     <div class="parent container" id="">
     <a class="media" href="" target=_blank>
@@ -105,12 +105,12 @@ function addContent(conteneur, template, mediaDescriptions) {
     maps  = clone.querySelector('.maps');
     maps.setAttribute("href", `https://www.google.fr/maps?&q=${latitude},${longitude}&z=17`);
     //console.log('conteneur: '+JSON.stringify(conteneur));
-        
+
     const myPromise = new Promise ((resolve, reject) => {
       conteneur.appendChild(clone);
       resolve(parent);
     });
-    myPromise.then((value) => { 
+    myPromise.then((value) => {
       initializeEventHandlers(value);
     })
     .catch((err) => { console.error(err); });
@@ -134,17 +134,17 @@ function initializeContent(conteneur, template, locationData, gpsReference) {
 function findAncestor (el, cls) {
   while ((el = el.parentNode) && el.className.indexOf(cls) < 0);
   return el;
-} 
+}
 
 
-function inMarker(e) {   
+function inMarker(e) {
   var element = document.getElementById(this.key);
   this._icon.classList.add("markerFocus");
   element.classList.add("mediaFocus");
   element.scrollIntoView({ behavior: "smooth", block: "nearest" });
-} 
+}
 
-function outMarker(e) {   
+function outMarker(e) {
   this._icon.classList.remove("markerFocus");
   var element = document.getElementById(this.key);
   element.classList.remove("mediaFocus");
@@ -152,7 +152,7 @@ function outMarker(e) {
 
 //----------------------------------------------------------------------------------------------
 
-function initializeEventHandlers(element) { 
+function initializeEventHandlers(element) {
     console.time('initializeEventHandlers');
 
     var latitude = element.getAttribute("data-latitude");
@@ -186,4 +186,4 @@ function initializeEventHandlers(element) {
     myMarkers[key].setZIndexOffset(Math.floor(latitude)-10);
   })
   console.timeEnd('initializeEventHandlers');
-} 
+}

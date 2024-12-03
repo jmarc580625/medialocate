@@ -1,5 +1,4 @@
 import os
-import sys
 import shutil
 import logging
 import subprocess  # nosec B404 - subprocess usage is required and secured
@@ -8,7 +7,6 @@ from typing import Optional, Dict, Any
 from pathlib import PurePath
 from exiftool import ExifToolHelper  # type: ignore[import-untyped]
 from medialocate.media.parameters import (
-    MEDIALOCATION_DIR,
     MEDIALOCATION_STORE_NAME,
     MEDIALOCATION_STORE_PATH,
     MEDIALOCATION_RES_DIR,
@@ -16,11 +14,12 @@ from medialocate.media.parameters import (
 )
 from medialocate.store.dict import DictStore
 from medialocate.location.gps import GPS
-from medialocate.util.file_naming import to_posix, to_uri
+from medialocate.util.file_naming import to_uri
 
 # -------------------------------------------------------------------------------
 # utility classes
 # -------------------------------------------------------------------------------
+
 
 class MediaType(Enum):
     MOVIE = "movie"
@@ -32,6 +31,7 @@ class MediaType(Enum):
 
     def toDict(self) -> str:
         return self.toString()
+
 
 class DataTag:
     #    id : str
@@ -60,6 +60,7 @@ class ExifKey(Enum):
 
     def toDict(self) -> str:
         return self.toString()
+
 
 # -------------------------------------------------------------------------------
 # core class
@@ -127,7 +128,9 @@ class MediaLocateAction:
             self.exiftool.terminate()
 
     def get_gps_data(self, file_to_process: str) -> GPS:
-        exiftool_path = self._get_third_party_path("exiftool")
+        # Validate exiftool is installed
+        # Ignore return value, only need side effect of setting thrird_party_path
+        _ = self._get_third_party_path("exiftool")
 
         if self.exiftool is None:
             self.exiftool = ExifToolHelper()
@@ -145,9 +148,7 @@ class MediaLocateAction:
                         raise MediaLocateAction.GPSExtractionError(
                             "Invalid GPS coordinates (0,0)"
                         )
-                    self.log.info(
-                        f"GPS coordinates found: {latitude}, {longitude}"
-                    )
+                    self.log.info(f"GPS coordinates found: {latitude}, {longitude}")
                     return GPS(latitude, longitude)
             raise MediaLocateAction.GPSExtractionError("No GPS data found")
         except Exception as e:
@@ -288,7 +289,7 @@ class MediaLocateAction:
         return snippet
 
     def create_location_page(self) -> Optional[str]:
-        if self.store.size() > 0 and self.store.is_touched():
+        if len(self.store) > 0 and self.store._touched:
             # copy a fresh version of the stylesheet and script appendices files if needed
             stylesheet_link_template = """<link rel = "stylesheet" href = "{path}">"""
             html_stylesheet_snippet = (
@@ -310,10 +311,10 @@ class MediaLocateAction:
             html_script_snippet += data_link_template.format(
                 path=PurePath(self.data_appendix_path).as_posix()
             )
-            if self.store.is_touched():
-                self.store.commit()
+            if self.store._touched:
+                self.store.sync()
                 with open(self.data_appendix_path, "w") as destination:
-                    with open(self.store.getPath(), "r") as source:
+                    with open(self.store.get_path(), "r") as source:
                         destination.write("medialocate_data=")
                         destination.write(source.read())
                         destination.write(";")
@@ -362,7 +363,7 @@ class MediaLocateAction:
                 data_tag.mediatype = media_type
                 data_tag.gps = gps
 
-                self.store.updateItem(hash, data_tag.toDict())
+                self.store.set(hash, data_tag.toDict())
                 return 0
 
             else:

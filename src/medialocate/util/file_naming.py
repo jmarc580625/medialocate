@@ -12,10 +12,11 @@ def to_uri(filename: str) -> str:
         return ""
     if not os.path.isabs(filename):
         uri = pathlib.Path(filename).resolve().as_uri()
-        uri =  uri[len(pathlib.Path(".").resolve().as_uri()) + 1 :]
+        uri = uri[len(pathlib.Path(".").resolve().as_uri()) + 1 :]
     else:
         uri = pathlib.Path(filename).resolve().as_uri()
     return uri
+
 
 def get_hash(filename: str) -> str:
     """

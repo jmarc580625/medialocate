@@ -1,7 +1,7 @@
 // Converts measure from degree to radian
 function degreeToRadian(degrees) {
   return degrees * Math.PI / 180;
-};      
+};
 
 // Converts measure from radian to degree
 function radianToDegree(radians) {
@@ -31,8 +31,8 @@ function getDistance(origin, destination){
   var dLon = degreeToRadian(destination.longitude-origin.longitude);
 
   var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-          Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(degreeToRadian(origin.latitude)) * Math.cos(degreeToRadian(destination.latitude)); 
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+          Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(degreeToRadian(origin.latitude)) * Math.cos(degreeToRadian(destination.latitude));
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   return earthRadiusKm * c;
 }
 
@@ -46,7 +46,7 @@ gpsNothPole         = {latitude:90,         longitude:0};
 gpsSouthPole        = {latitude:-90,        longitude:0};
 console.log("checks distance is nul: "+getDistance(gpsGreenWichEquator,gpsGreenWichEquator));
 console.log("checks distance is nul: "+getDistance(gpsGreenWichCity,gpsGreenWichCity));
-console.log("checks distance is 5918.185064088764: "+getDistance(gpsGreenWichCity, gpsAlexandria)); 
+console.log("checks distance is 5918.185064088764: "+getDistance(gpsGreenWichCity, gpsAlexandria));
 console.log("distance from Kansas City to St Louis (382,901 kilometers) : "+getDistance(gpsKansasCity, gpsStLouis));
 console.log("bearing angle from Kansas City to St Louis (96.513°) : "+getBearing(gpsKansasCity, gpsStLouis));
 console.log("bearing angle from Greenwich equator to noth pole (0°) : "+getBearing(gpsGreenWichEquator, gpsNothPole));

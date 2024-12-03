@@ -2,7 +2,7 @@
 function findAncestor (el, cls) {
   while ((el = el.parentNode) && el.className.indexOf(cls) < 0);
   return el;
-} 
+}
 
 class MediaHelper {
   constructor(conteneur_id, template_id, gps_reference = {latitude: 0, longitude: 0}, bearing_range = 30) {
@@ -77,8 +77,8 @@ class MediaHelper {
       if (Math.floor(pos1.bearing / this.bearing_range) > Math.floor(pos2.bearing / this.bearing_range)) return -1;
       if (Math.floor(pos1.bearing / this.bearing_range) < Math.floor(pos2.bearing / this.bearing_range)) return 1;
       return (pos1.distance > pos2.distance ? 1 : -1)
-    }.bind(this)); 
-  } 
+    }.bind(this));
+  }
 
   /*
   addContent generates html elements based on media descriptions and html template and add those generates html elements
@@ -87,18 +87,18 @@ class MediaHelper {
   parameters:
   - conteneur : a html element which can contain childs elements and will receive generated elements
   - template : an html template element used to generate html elements
-  - mediaDescription : an array of media description structure (see _sort) holding data used to generate new html elements 
+  - mediaDescription : an array of media description structure (see _sort) holding data used to generate new html elements
 
   html generation is based on a template structure which is must comply with the following constraints:
   - element with parent class holds in id             attribute a unique media key
-  - element with parent class holds in data-latitude  attribute the media gps latitude 
-  - element with parent class holds in data-longitude attribute the media gps longitude 
+  - element with parent class holds in data-latitude  attribute the media gps latitude
+  - element with parent class holds in data-longitude attribute the media gps longitude
   - element with media class  holds in href           attribute an url toward the media
   - element with child class  holds in src            attribute an url toward the media thumbnail picture
   - element with oms class    holds in href           attribute an url toward an openstreet map address search page based on media gps location
   - element with maps class   holds in href           attribute an url toward an google map page based on media gps location
 
-  A template structure example is given below: 
+  A template structure example is given below:
   <template>
       <div class="parent container" id="">
       <a class="media" href="" target=_blank>
@@ -139,12 +139,12 @@ class MediaHelper {
 
       var maps  = clone.querySelector('.maps');
       maps.setAttribute("href", `https://www.google.fr/maps?&q=${latitude},${longitude}&z=17`);
-          
+
       const myPromise = new Promise ((resolve, reject) => {
         this.conteneur.appendChild(clone);
         resolve(parent);
       });
-      myPromise.then((value) => { 
+      myPromise.then((value) => {
         this._initializeEventHandlers(value);
       })
       .catch((err) => { console.error(err); });
@@ -156,21 +156,21 @@ class MediaHelper {
     var latitude = element.getAttribute("data-latitude");
     var longitude = element.getAttribute("data-longitude");
     var key = element.getAttribute("id");
-  
+
     window.dispatchEvent(new CustomEvent(MARKER_ADD_EVENT, {detail: {id: key, latitude: latitude, longitude: longitude}}));
-  
+
     var child = element.getElementsByClassName('child')[0]
-  
+
     child.addEventListener('mouseover', function (event) {
       var key = findAncestor(event.target, "parent").getAttribute("id");
       window.dispatchEvent(new CustomEvent(MARKER_FOCUS_EVENT, {detail: {id: key}}));
     });
-  
+
     child.addEventListener('mouseout', function (event) {
       var key = findAncestor(event.target, "parent").getAttribute("id");
       window.dispatchEvent(new CustomEvent(MARKER_UNFOCUS_EVENT, {detail: {id: key}}));
     });
-  } 
+  }
 
   clear() {
     console.debug(this.logHeader + "clear");
@@ -182,7 +182,7 @@ class MediaHelper {
     var element = document.getElementById(key);
     element.classList.add("mediaFocus");
     element.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  } 
+  }
 
   unfocusFromMedia(key) {
     console.debug(this.logHeader + "unfocus from media: " + key);
