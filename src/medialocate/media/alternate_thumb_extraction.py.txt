@@ -1,0 +1,33 @@
+
+    def thumb_from_picture_with_python_PIL_package(
+        self: "MediaLocateAction", filename: str, thumbnail_name: str
+    ) -> bool:
+        from PIL import Image
+
+        # TODO: to be tested
+        with Image.open(filename) as img:
+            img.thumbnail((128, 128))
+            img.save(thumbnail_name, "JPEG")
+        return True
+
+
+    def thumb_from_picture_with_convert_shell(
+        self: "MediaLocateAction", filename: str, thumbnail_name: str
+    ) -> bool:
+        self.assert_package_is_installed(["convert", "-version"])
+        # TODO: to be tested
+        return (
+            subprocess.run(
+                ["convert", "-quiet", "-resize", "128x", filename, thumbnail_name]
+            ).returncode
+            == 0
+        )
+
+    def thumb_from_video_with_python_av_packages(
+        self: "MediaLocateAction", filename: str, thumbnail_name: str
+    ) -> bool:
+        # TODO: to be tested
+        # import av
+        # container = av.open(filename)
+        # video_stream = container.streams.video[0]
+        return True

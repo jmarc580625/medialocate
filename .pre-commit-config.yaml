@@ -3,36 +3,32 @@ repos:
     rev: v4.4.0
     hooks:
     -   id: trailing-whitespace
-        exclude: ^(test/|tests/)
     -   id: end-of-file-fixer
-        exclude: ^(test/|tests/)
     -   id: check-yaml
-        exclude: ^(test/|tests/)
     -   id: check-added-large-files
-        exclude: ^(test/|tests/)
     -   id: debug-statements
-        exclude: ^(test/|tests/)
 
 -   repo: https://github.com/psf/black
     rev: 23.3.0
     hooks:
     -   id: black
         language_version: python3
-        exclude: ^(test/|tests/)
 
 -   repo: https://github.com/PyCQA/flake8
     rev: 6.0.0
     hooks:
     -   id: flake8
         additional_dependencies: [flake8-docstrings]
-        exclude: ^(test/|tests/)
+        # More relaxed rules for tests
+        args: ['--per-file-ignores=test/*:D100,D101,D102,D103,F841 tests/*:D100,D101,D102,D103']
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.3.0
     hooks:
     -   id: mypy
         additional_dependencies: [types-PyYAML]
-        exclude: ^(test/|tests/)
+        # Less strict typing for tests
+        args: ['--disallow-untyped-defs', '--exclude=test/|tests/']
 
 -   repo: https://github.com/PyCQA/bandit
     rev: 1.7.5
@@ -40,4 +36,5 @@ repos:
     -   id: bandit
         args: ["-c", "pyproject.toml"]
         additional_dependencies: ["bandit[toml]"]
+        # Security checks less relevant for tests
         exclude: ^(test/|tests/)

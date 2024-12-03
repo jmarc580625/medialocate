@@ -4,11 +4,10 @@
             "name": "Python Debugger: locate_media.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/locate_media.py",
+            "program": "${workspaceFolder}/src/medialocate/locate_media.py",
             "console": "integratedTerminal",
             "args": [
-                "sandbox",
-                "${command:pickArgs}"
+                "sandbox"
             ]
         },
         {
@@ -22,11 +21,21 @@
             "name": "Python Debugger: media_server.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/web/media_server.py",
+            "program": "${workspaceFolder}/src/medialocate/web/media_server.py",
             "console": "integratedTerminal",
             "args": [
                 "-d",
                 "\\\\LaSourceNas\\colexion-3\\video\\amateur"
+            ]
+        },
+        {
+            "name": "Python Debugger: process_files.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/medialocate/process_files.py",
+            "console": "integratedTerminal",
+            "args": [
+                "sandbox"
             ]
         },
         {
@@ -41,5 +50,11 @@
             "request": "launch",
             "url": "file:////${workspaceFolder}/src/web_ux/medialocate.html"
         },
+        {
+            "name": "Python Debugger: Python File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}"
+        }
     ]
 }

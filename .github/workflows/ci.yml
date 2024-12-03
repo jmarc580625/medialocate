@@ -3,120 +3,148 @@ name: CI/CD Pipeline
 on:
   push:
     branches: [ main, master ]
+    tags: ['v*']
   pull_request:
     branches: [ main, master ]
 
 jobs:
   quality:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
-        
-    - name: Cache pip packages
+        python-version: '3.12'
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.7.1
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Load cached Poetry virtualenv
+      id: cached-poetry-dependencies
       uses: actions/cache@v3
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('requirements*.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-        
+        path: .venv
+        key: venv-${{ matrix.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
-        
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root
+
     - name: Check formatting with Black
-      run: black --check src
-        
+      run: poetry run black --check src
+
     - name: Lint with flake8
-      run: flake8 src --max-line-length=100
-        
+      run: poetry run flake8 src --max-line-length=100
+
     - name: Type checking with mypy
-      run: mypy src
-        
+      run: poetry run mypy src
+
     - name: Security check with bandit
-      run: bandit -r src
+      run: poetry run bandit -r src
 
   test:
     needs: quality
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11']
-    
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+    runs-on: ${{ matrix.os }}
+
     env:
-      PYTHONPATH: src:tests
-      COVERAGE_FILE: .coverage.${{ matrix.python-version }}
-    
+      PYTHONPATH: ${{ matrix.os == 'windows-latest' && 'src;tests' || 'src:tests' }}
+
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-        
-    - name: Cache pip packages
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.7.1
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Load cached Poetry virtualenv
+      id: cached-poetry-dependencies
       uses: actions/cache@v3
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('requirements*.txt') }}-py${{ matrix.python-version }}
-        restore-keys: |
-          ${{ runner.os }}-pip-py${{ matrix.python-version }}
-        
+        path: .venv
+        key: venv-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
-        
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root
+
     - name: Run tests with coverage
       run: |
-        pytest --cov=src --cov-report=xml --cov-report=html --junitxml=test-results-${{ matrix.python-version }}.xml
-        
+        poetry run pytest --cov=medialocate --cov-report=xml --cov-report=html --junitxml=test-results-${{ matrix.python-version }}-${{ matrix.os }}.xml
+
     - name: Upload test results
       uses: actions/upload-artifact@v3
       if: always()
       with:
-        name: test-results-${{ matrix.python-version }}
+        name: test-results-${{ matrix.python-version }}-${{ matrix.os }}
         path: |
-          test-results-${{ matrix.python-version }}.xml
+          test-results-${{ matrix.python-version }}-${{ matrix.os }}.xml
           htmlcov
-        
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
         env_vars: OS,PYTHON
-        name: codecov-py${{ matrix.python-version }}
+        name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
         fail_ci_if_error: true
 
-  build:
+  deploy:
     needs: test
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v'))
+
     steps:
     - uses: actions/checkout@v3
-    
+      with:
+        fetch-depth: 0
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
-        
-    - name: Install build dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build wheel
-        
-    - name: Build package
-      run: python -m build
-      
-    - name: Upload package artifacts
-      uses: actions/upload-artifact@v3
+        python-version: '3.12'
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
       with:
-        name: dist
-        path: dist/
-        if-no-files-found: error
+        version: 1.7.1
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Build package
+      run: poetry build
+
+    - name: Publish to PyPI (if tagged)
+      if: startsWith(github.ref, 'refs/tags/v')
+      env:
+        POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
+      run: poetry publish
+
+    - name: Create GitHub Release (if tagged)
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/*.whl
+          dist/*.tar.gz
+        generate_release_notes: true
