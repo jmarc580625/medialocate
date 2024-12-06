@@ -64,11 +64,15 @@ class TestMediaProxies(unittest.TestCase):
         self.proxies = MediaProxies("test_group", [self.gps1, self.gps2, self.gps3])
 
     def test_proxies_initialization(self):
-        self.assertEqual(self.proxies.label, "test_group")
-        self.assertEqual(
-            self.proxies.group_locations, [self.gps1, self.gps2, self.gps3]
-        )
-        self.assertEqual(self.proxies.proxies, {})
+        """Test initialization of MediaProxies."""
+        # Create a fresh instance for this test
+        proxies = MediaProxies("test_group", [self.gps1, self.gps2, self.gps3], {})
+
+        self.assertEqual(proxies.label, "test_group")
+        self.assertEqual(proxies.group_locations, [self.gps1, self.gps2, self.gps3])
+        # Test that proxies dict is initialized as provided
+        self.assertIsInstance(proxies.proxies, dict)
+        self.assertEqual(len(proxies.proxies), 0)
 
     def test_proxies_matching(self):
         # Find proxies

@@ -124,7 +124,7 @@ class TestMediaLocateAction(unittest.TestCase):
 
         test_file = os.path.join(self.test_files_dir, "picture.jpg")
         with self.assertRaises(MediaLocateAction.GPSExtractionError):
-            gps = self.action.get_gps_data(test_file)
+            _ = self.action.get_gps_data(test_file)
 
         # Verify ExifTool was called
         mock_exiftool_instance.get_tags.assert_called_once_with(

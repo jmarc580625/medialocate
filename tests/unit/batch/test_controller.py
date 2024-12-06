@@ -105,8 +105,6 @@ class TestProcessMemory(unittest.TestCase):
                 StoreMock.return_value.get.return_value = None
                 orchestrator = ActionControler(
                     working_directory,
-                    None,
-                    True,
                 )
 
                 # Act
@@ -148,8 +146,6 @@ class TestProcessMemory(unittest.TestCase):
             with patch(f"{BATCH_CONTROLER}.DictStore") as StoreMock:
                 orchestrator = ActionControler(
                     working_directory,
-                    None,
-                    True,
                 )
 
                 # Act
@@ -197,8 +193,6 @@ class TestProcessMemory(unittest.TestCase):
             with patch(f"{BATCH_CONTROLER}.DictStore") as StoreMock:
                 orchestrator = ActionControler(
                     working_directory,
-                    None,
-                    True,
                 )
 
                 # Act
@@ -243,8 +237,6 @@ class TestProcessMemory(unittest.TestCase):
             with patch(f"{BATCH_CONTROLER}.DictStore") as StoreMock:
                 orchestrator = ActionControler(
                     working_directory,
-                    None,
-                    True,
                     force_option=True,
                 )
 
@@ -290,9 +282,6 @@ class TestProcessMemory(unittest.TestCase):
             with patch(f"{BATCH_CONTROLER}.DictStore") as StoreMock:
                 orchestrator = ActionControler(
                     working_directory,
-                    None,
-                    True,
-                    force_option=True,
                 )
 
                 # Act
@@ -337,7 +326,6 @@ class TestProcessMemory(unittest.TestCase):
                 orchestrator = ActionControler(
                     working_directory,
                     ignore_from_action,
-                    False,
                 )
 
                 # Act
@@ -381,7 +369,6 @@ class TestProcessMemory(unittest.TestCase):
                 orchestrator = ActionControler(
                     working_directory,
                     error_from_action,
-                    False,
                 )
 
                 # Act
@@ -415,8 +402,6 @@ class TestProcessMemory(unittest.TestCase):
                 StoreMock.return_value.get.return_value = None
                 orchestrator = ActionControler(
                     working_directory,
-                    None,
-                    False,
                 )
 
                 # Act
@@ -439,8 +424,6 @@ class TestProcessMemory(unittest.TestCase):
         with patch(f"{BATCH_CONTROLER}.DictStore") as StoreMock:
             orchestrator = ActionControler(
                 working_directory,
-                None,
-                False,
             )
 
             # Act
@@ -538,7 +521,6 @@ class TestProcessMemory(unittest.TestCase):
             orchestrator = ActionControler(
                 working_directory,
                 mock_rc,
-                False,
             )
             cnt = 0
             for i in range(mock_size):

@@ -1,8 +1,20 @@
+"""File system traversal and file discovery functionality.
+
+This module provides utilities for recursively finding files in a directory structure
+based on various criteria such as extensions, age, and depth.
+"""
+
 import os
 from typing import Iterator
 
 
 class FileFinder:
+    """File system traversal utility for finding files matching specific criteria.
+
+    This class provides functionality to recursively search for files in a directory
+    structure with filtering based on extensions, age, depth, and other criteria.
+    """
+
     # instance variables
     root_path: str
     root_depth: int
@@ -22,6 +34,19 @@ class FileFinder:
         min_age: float = 0,
         max_depth: int = -1,
     ) -> None:
+        """Initialize a new FileFinder instance.
+
+        Args:
+            root_path: Base directory to start the search
+            extensions: List of file extensions to filter by (case insensitive)
+            matches: List of exact filenames to match
+            prune: List of directory names to exclude from search
+            min_age: Minimum age of files to include (unix timestamp)
+            max_depth: Maximum directory depth to search (-1 for unlimited)
+
+        Raises:
+            FileNotFoundError: If root_path is not a directory
+        """
         if not os.path.isdir(root_path):
             raise FileNotFoundError(f"Path '{root_path}' is not a directory")
 
@@ -42,17 +67,13 @@ class FileFinder:
     def find(
         self: "FileFinder",
     ) -> Iterator[str]:
-        """
-        Recursively search for files in the specified root_path that end with the specified
-        extensions (case insensitive).
+        """Find files matching the configured criteria.
 
-        Parameters:
-            . root_path (str): the directory to start the search in
-            . extensions (list of str): the filename extensions to search for
-            . excluded_directories (list of str): the directories to exclude from the search
-            . min_age (int): the minimum age of the files to be searched (unix timestamp)
-            . max_depth (int): the maximum depth of the search (-1 for all subdirectories,
-              0 for the current directory)
+        Recursively searches through the directory structure starting at root_path,
+        applying all configured filters (extensions, age, depth, etc).
+
+        Yields:
+            str: Full path to each matching file
         """
         for root, _, files in os.walk(self.root_path):
             path_elements = root.split(os.sep)
@@ -89,4 +110,13 @@ class FileFinder:
                 yield os.path.join(root, file)
 
     def get_counters(self: "FileFinder") -> dict:
+        """Get statistics about the file search operation.
+
+        Returns:
+            dict: Counter values including:
+                - dirs: Number of directories traversed
+                - files: Total number of files seen
+                - depth: Maximum depth reached
+                - found: Number of matching files found
+        """
         return self.counters

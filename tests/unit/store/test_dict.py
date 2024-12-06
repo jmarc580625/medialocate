@@ -5,7 +5,7 @@ import json
 import shutil
 import tempfile
 import unittest
-from typing import Dict, Any
+
 
 from medialocate.store.dict import DictStore
 
@@ -46,7 +46,7 @@ class TestDictStore(unittest.TestCase):
 
         # Act
         with self.assertRaises(FileNotFoundError):
-            store = DictStore(non_existent_directory, self.store_name)
+            _ = DictStore(non_existent_directory, self.store_name)
 
     def test_open_with_non_existing_store_file(self) -> None:
         """Test open with non existing store file"""
@@ -147,7 +147,6 @@ class TestDictStore(unittest.TestCase):
         item2_key = "key2"
         item2_value = {"value": "value2"}
         item3_key = "key3"
-        item3_value = {"value": "value3"}
         item3_value_x = {"value": "value3X"}
         item3_value_y = {"value": "value3Y"}
         data = {item1_key: item1_value, item2_key: item2_value}
@@ -228,7 +227,6 @@ class TestDictStore(unittest.TestCase):
         data = {item1_key: item1_value, item2_key: item2_value}
         with open(self.store_path, "w") as f:
             json.dump(data, f)
-        time_before = os.path.getmtime(self.store_path)
         store = DictStore(self.store_dir, self.store_name)
         store.open()
 
@@ -375,10 +373,10 @@ class TestDictStore(unittest.TestCase):
             store.set("key", {"value": "value"})
 
         with self.assertRaises(DictStore.StoreNotOpenError):
-            rec = store.get("key")
+            _ = store.get("key")
 
         with self.assertRaises(DictStore.StoreNotOpenError):
-            rec = store.pop("key")
+            _ = store.pop("key")
 
         with self.assertRaises(DictStore.StoreNotOpenError):
             for key, val in store.items():

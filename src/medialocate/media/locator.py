@@ -1,9 +1,17 @@
+"""Media file location and metadata handling module.
+
+This module provides functionality for locating media files, extracting their GPS
+metadata using ExifTool, and managing media file types. It supports various media
+formats including pictures and movies, with capabilities for GPS data extraction
+and media type classification.
+"""
+
 import os
 import shutil
 import logging
 import subprocess  # nosec B404 - subprocess usage is required and secured
 from enum import Enum
-from typing import Optional, Dict, Any
+from typing import Optional, Any
 from pathlib import PurePath
 from exiftool import ExifToolHelper  # type: ignore[import-untyped]
 from medialocate.media.parameters import (
@@ -16,32 +24,62 @@ from medialocate.store.dict import DictStore
 from medialocate.location.gps import GPS
 from medialocate.util.file_naming import to_uri
 
-# -------------------------------------------------------------------------------
-# utility classes
-# -------------------------------------------------------------------------------
-
 
 class MediaType(Enum):
+    """Enumeration of supported media file types.
+
+    Attributes:
+        MOVIE: Video media files
+        PICTURE: Image media files
+        UNKNOWN: Unrecognized media types
+    """
+
     MOVIE = "movie"
     PICTURE = "picture"
     UNKNOWN = "unknown"
 
     def toString(self) -> str:
+        """Convert media type to lowercase string.
+
+        Returns:
+            String representation of the media type
+        """
         return self.name.lower()
 
     def toDict(self) -> str:
+        """Convert media type to dictionary format.
+
+        Returns:
+            String representation for dictionary storage
+        """
         return self.toString()
 
 
 class DataTag:
-    #    id : str
-    mediasource: str
-    mediathumbnail: str
-    mediaformat: str
-    mediatype: MediaType
-    gps: GPS
+    """Container for media file metadata and location information.
+
+    Attributes:
+        mediasource: Source path of the media file
+        mediathumbnail: Path to the media thumbnail
+        mediaformat: Format/extension of the media file
+        mediatype: Type of media (movie, picture, etc.)
+        gps: GPS coordinates of the media location
+    """
+
+    def __init__(self):
+        """Initialize DataTag instance."""
+        self.mediasource = ""
+        self.mediathumbnail = ""
+        self.mediaformat = ""
+        self.mediatype = MediaType.UNKNOWN
+        self.gps = GPS(0, 0)
 
     def toDict(self) -> dict[str, Any]:
+        """Convert data tag to dictionary format.
+
+        Returns:
+            Dictionary containing all metadata fields
+        """
         return {
             "mediasource": self.mediasource,
             "mediathumbnail": self.mediathumbnail,
@@ -52,20 +90,48 @@ class DataTag:
 
 
 class ExifKey(Enum):
+    """Enumeration of EXIF metadata keys for GPS data.
+
+    Attributes:
+        LATITUDE: EXIF key for GPS latitude
+        LONGITUDE: EXIF key for GPS longitude
+    """
+
     LATITUDE = "Composite:GPSLatitude"
     LONGITUDE = "Composite:GPSLongitude"
 
     def toString(self) -> str:
+        """Convert EXIF key to string.
+
+        Returns:
+            String representation of the EXIF key
+        """
         return self.value
 
     def toDict(self) -> str:
+        """Convert EXIF key to dictionary format.
+
+        Returns:
+            String representation for dictionary storage
+        """
         return self.toString()
 
 
-# -------------------------------------------------------------------------------
-# core class
-# -------------------------------------------------------------------------------
 class MediaLocateAction:
+    """Core class for media file location and metadata processing.
+
+    Handles media file processing, GPS data extraction, and resource management.
+    Uses ExifTool for metadata extraction and supports various media formats.
+
+    Attributes:
+        working_directory: Base directory for processing
+        out_file: Output file path
+        log: Logger instance
+        store: Dictionary store for data
+        ressources_path: Path to resource files
+        exiftool: ExifTool helper instance
+    """
+
     LOGGER_NAME = "MediaLocateAction"
     STORE_NAME = MEDIALOCATION_STORE_NAME
     RESSOURCE_DIR_NAME = MEDIALOCATION_RES_DIR
@@ -73,20 +139,13 @@ class MediaLocateAction:
     EPILOG_RESSOURCE_NAME = "epilog.html"
     DATA_APPENDIX_NAME = MEDIALOCATION_STORE_PATH
 
-    working_directory: str
-    out_file: str
-    log: logging.Logger
-    parent_logger: Optional[str]
-    store: DictStore
-    ressources_path: str
-    prolog_resource_path: str
-    epilog_resource_path: str
-    data_appendix_path: str
-    thrird_party_path: Dict[str, str]
-    exiftool: Optional[ExifToolHelper]
-
     class GPSExtractionError(Exception):
-        pass
+        """Exception raised when GPS data extraction fails.
+
+        This exception is raised when GPS coordinates cannot be extracted
+        from a media file's EXIF data, either due to missing data or
+        invalid coordinates.
+        """
 
     def __init__(
         self,
@@ -94,6 +153,13 @@ class MediaLocateAction:
         outfile: str,
         parent_logger: Optional[str] = None,
     ) -> None:
+        """Initialize MediaLocateAction instance.
+
+        Args:
+            working_directory: Base directory for processing
+            outfile: Output file path
+            parent_logger: Optional parent logger name
+        """
         self.working_directory = working_directory
         self.out_file = outfile
         self.log = logging.getLogger(
@@ -113,21 +179,47 @@ class MediaLocateAction:
         self.data_appendix_path = os.path.join(
             self.working_directory, MEDIALOCATION_PAGE_DATA
         )
-        self.thrird_party_path = {}
-        self.exiftool = None
+        self.thrird_party_path: dict[str, str] = {}
+        self.exiftool: Optional[ExifToolHelper] = None
 
     def __call__(self, file_to_process: str, file_status: str) -> int:
+        """Process a media file when instance is called as a function.
+
+        Args:
+            file_to_process: Path to media file
+            file_status: Status file path
+
+        Returns:
+            Processing result code
+        """
         return self.process(file_to_process, file_status)
 
     def __enter__(self) -> "MediaLocateAction":
+        """Enter context manager.
+
+        Returns:
+            Self instance
+        """
         return self
 
     def __exit__(self, *args) -> None:
+        """Exit context manager and cleanup resources."""
         self.store.close()
         if self.exiftool is not None:
             self.exiftool.terminate()
 
     def get_gps_data(self, file_to_process: str) -> GPS:
+        """Extract GPS coordinates from media file's EXIF data.
+
+        Args:
+            file_to_process: Path to media file
+
+        Returns:
+            GPS coordinates from EXIF data
+
+        Raises:
+            GPSExtractionError: If GPS data is missing or invalid
+        """
         # Validate exiftool is installed
         # Ignore return value, only need side effect of setting thrird_party_path
         _ = self._get_third_party_path("exiftool")
@@ -176,18 +268,46 @@ class MediaLocateAction:
 
     @classmethod
     def get_expected_extensions(cls) -> list[str]:
+        """Get list of supported media file extensions.
+
+        Returns:
+            List of supported file extensions with leading dot
+        """
         return [f".{ext}" for ext in cls.media_types.keys()]
 
     @classmethod
     def get_filename_extension(cls, filename: str) -> str:
+        """Extract file extension from filename.
+
+        Args:
+            filename: Name of the file
+
+        Returns:
+            Lowercase extension without leading dot
+        """
         return os.path.splitext(filename)[1][1:].lower()
 
     @classmethod
     def get_media_type(cls, extension: str) -> MediaType:
+        """Determine media type from file extension.
+
+        Args:
+            extension: File extension to check
+
+        Returns:
+            MediaType enum value for the extension
+        """
         return cls.media_types.get(extension, MediaType.UNKNOWN)
 
     def _get_third_party_path(self, package_name: str) -> Optional[str]:
-        """Get the full path to a third-party executable using shutil.which."""
+        """Get the full path to a third-party executable.
+
+        Args:
+            package_name: Name of the executable to find
+
+        Returns:
+            Full path to executable or None if not found
+        """
         if package_name in self.thrird_party_path:
             return self.thrird_party_path[package_name]
 
@@ -209,7 +329,15 @@ class MediaLocateAction:
             return None
 
     def generate_thumbnail(self, filename: str, thumbnail_name: str) -> bool:
-        """Generate a thumbnail for a video or picture file."""
+        """Generate a thumbnail for a video or picture file.
+
+        Args:
+            filename: Path to media file
+            thumbnail_name: Path to output thumbnail
+
+        Returns:
+            True if thumbnail was generated, False otherwise
+        """
         try:
             # Get and validate ffmpeg path
             ffmpeg_path = self._get_third_party_path("ffmpeg")
@@ -267,6 +395,16 @@ class MediaLocateAction:
         media_type: MediaType,
         thumbnail_name: str,
     ) -> bool:
+        """Create thumbnail for media file.
+
+        Args:
+            filename: Path to media file
+            media_type: Type of media
+            thumbnail_name: Path to output thumbnail
+
+        Returns:
+            True if thumbnail was generated, False otherwise
+        """
         if media_type in [MediaType.MOVIE, MediaType.PICTURE]:
             return self.generate_thumbnail(filename, thumbnail_name)
         return False
@@ -274,6 +412,15 @@ class MediaLocateAction:
     def copy_location_page_appendices_and_get_associated_html_links(
         self, file_extension: str, template: str
     ) -> str:
+        """Copy location page appendices and generate HTML links.
+
+        Args:
+            file_extension: File extension to process
+            template: HTML template for links
+
+        Returns:
+            HTML snippet with links to appended files
+        """
         snippet = ""
         for source in os.listdir(self.ressources_path):
             if source.endswith(file_extension):
@@ -289,6 +436,11 @@ class MediaLocateAction:
         return snippet
 
     def create_location_page(self) -> Optional[str]:
+        """Create location page from processed media data.
+
+        Returns:
+            Path to generated location page or None if not created
+        """
         if len(self.store) > 0 and self.store._touched:
             # copy a fresh version of the stylesheet and script appendices files if needed
             stylesheet_link_template = """<link rel = "stylesheet" href = "{path}">"""
@@ -344,6 +496,15 @@ class MediaLocateAction:
             return None
 
     def process(self, file_to_process: str, hash: str) -> int:
+        """Process a media file to extract and store its metadata.
+
+        Args:
+            file_to_process: Path to media file
+            hash: Hash value for media file
+
+        Returns:
+            0 on success, non-zero on error
+        """
         try:
             gps = self.get_gps_data(file_to_process)
 

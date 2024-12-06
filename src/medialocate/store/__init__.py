@@ -1,7 +1,7 @@
-"""
-Storage module for persisting and retrieving data.
-"""
+"""Storage module for persisting and retrieving data."""
 
-from typing import List, Dict, Any
+from typing import List
 
-__all__: List[str] = []  # Add your public exports here
+from medialocate.store.dict import DictStore
+
+__all__: List[str] = ["DictStore"]  # Add your public exports here

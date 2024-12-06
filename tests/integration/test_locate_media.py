@@ -23,14 +23,13 @@ from medialocate.util.file_naming import get_hash
 
 
 @dataclass
-class TestMediaFile:
-    """Test media file configuration"""
+class MediaFileFixture:
+    """Test media file configuration data container."""
 
     filename: str
     content: bytes = b""  # Optional binary content
     media_type: MediaType = MediaType.PICTURE
-    gps_data: Optional[GPS] = None  # GPS coordinates if available
-    expected_thumbnail: bool = True  # Whether thumbnail generation should succeed
+    gps: Optional[GPS] = None
 
 
 class TestLocateMediaCommand(unittest.TestCase):
@@ -44,28 +43,27 @@ class TestLocateMediaCommand(unittest.TestCase):
 
         # Test scenarios
         self.test_files = [
-            TestMediaFile(
+            MediaFileFixture(
                 filename="photo1.jpg",
                 content=b"test_jpg_content",
-                gps_data=GPS(47.6062, -122.3321),  # Seattle coordinates
+                gps=GPS(47.6062, -122.3321),  # Seattle coordinates
             ),
-            TestMediaFile(
+            MediaFileFixture(
                 filename="photo2.jpg",
                 content=b"test_jpg_content",
-                gps_data=None,  # No GPS data
-                expected_thumbnail=False,  # no Thumbnail
+                gps=None,  # No GPS data
+                media_type=MediaType.PICTURE,
             ),
-            TestMediaFile(
+            MediaFileFixture(
                 filename="video1.mp4",
                 content=b"test_mp4_content",
                 media_type=MediaType.MOVIE,
-                gps_data=GPS(48.8566, 2.3522),  # Paris coordinates
+                gps=GPS(48.8566, 2.3522),  # Paris coordinates
             ),
-            TestMediaFile(
+            MediaFileFixture(
                 filename="corrupted.jpg",
                 content=b"corrupted_content",
-                gps_data=GPS(48.8566, 2.3522),  # Paris coordinates
-                expected_thumbnail=False,  # no Thumbnail
+                gps=GPS(48.8566, 2.3522),  # Paris coordinates
             ),
         ]
 
@@ -85,16 +83,19 @@ class TestLocateMediaCommand(unittest.TestCase):
         """Helper to return mock GPS data based on test file"""
         for test_case in self.test_files:
             if test_file.endswith(test_case.filename):
-                if test_case.gps_data is None:
+                if test_case.gps is None:
                     raise MediaLocateAction.GPSExtractionError("No GPS data found")
-                return test_case.gps_data
+                return test_case.gps
         return None
 
     def _mock_thumbnail(self, input_file: str, output_file: str) -> bool:
         """Helper to simulate thumbnail generation success/failure"""
         for test_case in self.test_files:
             if input_file.endswith(test_case.filename):
-                if test_case.expected_thumbnail:
+                if (
+                    test_case.filename == "photo1.jpg"
+                    or test_case.filename == "video1.mp4"
+                ):
                     # Create a dummy thumbnail file
                     os.makedirs(os.path.dirname(output_file), exist_ok=True)
                     with open(output_file, "wb") as f:
@@ -124,7 +125,7 @@ class TestLocateMediaCommand(unittest.TestCase):
         for test_file in self.test_files:
             thumb_name = f"{get_hash(test_file.filename)}.jpg"
             thumb_path = os.path.join(media_output_dir, thumb_name)
-            if test_file.expected_thumbnail:
+            if test_file.filename == "photo1.jpg" or test_file.filename == "video1.mp4":
                 self.assertTrue(
                     os.path.exists(thumb_path),
                     f"Thumbnail not found for {test_file.filename}",
@@ -167,7 +168,7 @@ class TestLocateMediaCommand(unittest.TestCase):
         # Verify thumbnails were regenerated
         media_output_dir = os.path.join(self.media_dir, MEDIALOCATION_DIR)
         for test_file in self.test_files:
-            if test_file.expected_thumbnail:
+            if test_file.filename == "photo1.jpg" or test_file.filename == "video1.mp4":
                 thumb_name = f"{get_hash(test_file.filename)}.jpg"
                 thumb_path = os.path.join(media_output_dir, thumb_name)
                 self.assertTrue(os.path.exists(thumb_path))
@@ -198,7 +199,7 @@ class TestLocateMediaCommand(unittest.TestCase):
 
         # Verify main directory files were processed
         for test_file in self.test_files:
-            if test_file.expected_thumbnail:
+            if test_file.filename == "photo1.jpg" or test_file.filename == "video1.mp4":
                 thumb_name = f"{get_hash(test_file.filename)}.jpg"
                 thumb_path = os.path.join(media_output_dir, thumb_name)
                 self.assertTrue(os.path.exists(thumb_path))

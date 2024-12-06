@@ -1,4 +1,5 @@
 """Common test fixtures and configuration."""
+
 import os
 import pytest
 import tempfile

@@ -35,10 +35,27 @@ class DictStore:
         self._touched = False
 
     def __enter__(self) -> "DictStore":
+        """Enter the runtime context for using the dictionary store.
+
+        Opens the store and returns self as the context manager.
+
+        Returns:
+            DictStore: The store instance for use in a context manager
+        """
         self.open()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
+        """Exit the runtime context and ensure the store is properly closed.
+
+        Closes the store, ensuring all changes are saved, regardless of whether
+        an exception occurred.
+
+        Args:
+            exc_type: Type of the exception that occurred, if any
+            exc_value: Instance of the exception that occurred, if any
+            traceback: Traceback if an exception occurred
+        """
         self.close()
 
     def __len__(self) -> int:

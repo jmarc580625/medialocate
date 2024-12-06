@@ -1,6 +1,9 @@
-# -------------------------------------------------------------------------------
-# imports
-# -------------------------------------------------------------------------------
+"""Media file location and GPS data extraction.
+
+This module provides functionality to locate media files in directories and extract
+their GPS location data, supporting batch processing and browser-based visualization.
+"""
+
 import os
 import logging
 import argparse
@@ -19,6 +22,17 @@ LIB_DIR = os.path.realpath(os.path.join(EXEC_HOME, "../lib"))
 
 
 def get_directories(names: list[str]) -> set[str]:
+    """Get a set of directory paths from a list of names.
+
+    If no names are provided, uses the current working directory.
+    Supports glob patterns for directory selection.
+
+    Args:
+        names: List of directory names or glob patterns
+
+    Returns:
+        Set of resolved directory paths
+    """
     directories = set()
     for name in names:
         directories.update(glob.glob(name))
@@ -36,6 +50,20 @@ def locate_media(
     regenerate_option: bool = False,
     current_directory_only_option: bool = False,
 ) -> int:
+    """Process media files in a directory to extract GPS location data.
+
+    Args:
+        log: Logger instance for output
+        directory: Directory to process
+        output_file_name: Path to save extracted location data
+        force_option: Force processing even if output exists
+        launch_option: Launch browser after processing
+        regenerate_option: Regenerate all location data
+        current_directory_only_option: Only process current directory
+
+    Returns:
+        0 on success, 1 on error
+    """
     try:
         new_dir = os.path.normpath(directory.strip())
         os.chdir(new_dir)
@@ -109,7 +137,11 @@ def locate_media(
 
 
 def launch_browser(page: str) -> None:
-    """Launch the browser safely using platform-specific methods."""
+    """Launch the system's default web browser to view results.
+
+    Args:
+        page: URL or file path to open in browser
+    """
     try:
         import webbrowser
 
@@ -119,6 +151,11 @@ def launch_browser(page: str) -> None:
 
 
 def main():
+    """Run the media location extraction tool.
+
+    Processes command line arguments and executes the media location extraction
+    based on provided parameters and directory paths.
+    """
     help = """
     extract GSP location for all media files in the target directory and its subdirectories to
     generates an html application page showing media and places where they have been captured

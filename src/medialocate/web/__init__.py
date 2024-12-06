@@ -1,7 +1,7 @@
-"""
-Web interface module for the application.
-"""
+"""Web interface module for the application."""
 
-from typing import List, Dict, Any
+from typing import List
 
-__all__: List[str] = []  # Add your public exports here
+from medialocate.web.media_server import MediaServer
+
+__all__: List[str] = ["MediaServer"]  # Add your public exports here

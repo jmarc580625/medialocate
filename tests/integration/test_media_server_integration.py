@@ -145,18 +145,18 @@ class TestMediaServer(unittest.TestCase):
     def test_albums_endpoint(self):
         # Test the /api/albums endpoint
         conn = HTTPConnection("localhost", MEDIASERVER_PORT)
-        conn.request("GET", "/api/media/albums")
+        conn.request("GET", "/api/albums")
         response = conn.getresponse()
         self.assertEqual(response.status, 200)
-        data = json.loads(response.read().decode("utf-8"))
-        self.assertIn("album1", data)
-        self.assertIn("album2", data)
+        data = json.loads(response.read().decode())
+        self.assertIn("album1", str(data))
+        self.assertIn("album2", str(data))
         conn.close()
 
     def test_album_endpoint(self):
         # Test the /api/album endpoint for a specific album
         conn = HTTPConnection("localhost", MEDIASERVER_PORT)
-        conn.request("GET", "/api/media/album?album1")
+        conn.request("GET", "/api/album?album1")
         response = conn.getresponse()
         self.assertEqual(response.status, 200)
         data = response.read().decode("utf-8")
@@ -172,7 +172,7 @@ class TestMediaServer(unittest.TestCase):
 
         # Test the proxy endpoint for media files
         conn = HTTPConnection("localhost", MEDIASERVER_PORT)
-        conn.request("GET", f"/proxy?album1/test.txt")
+        conn.request("GET", f"/media/album1/test.txt")
         response = conn.getresponse()
         self.assertEqual(response.status, 200)
         self.assertEqual(response.read(), test_data)
@@ -186,10 +186,10 @@ class TestMediaServer(unittest.TestCase):
         self.assertEqual(response.status, 404)
         conn.close()
 
-    def test_invalid_proxy_path(self):
+    def test_invalid_media_path(self):
         # Test requesting an invalid proxy path
         conn = HTTPConnection("localhost", MEDIASERVER_PORT)
-        conn.request("GET", "/proxy?../invalid.jpg")
+        conn.request("GET", "/media/../invalid.jpg")
         response = conn.getresponse()
         self.assertEqual(response.status, 400)
         conn.close()
@@ -201,7 +201,7 @@ class TestMediaServer(unittest.TestCase):
         def make_request():
             conn = HTTPConnection("localhost", MEDIASERVER_PORT)
             try:
-                conn.request("GET", "/api/media/albums")
+                conn.request("GET", "/api/albums")
                 response = conn.getresponse()
                 status = response.status
                 response.read()  # Need to read the response to free the connection
@@ -224,13 +224,13 @@ class TestMediaServer(unittest.TestCase):
         # Test handling of malformed requests
         test_cases = [
             # Missing path parameter
-            ("/api/media/album", 400),
+            ("/api/album", 400),
             # Invalid URL encoding, TODO: needs to check it is actually invalid
-            ("/api/media/album?%FF", 400),
+            ("/api/album?%FF", 400),
             # Path traversal attempt
-            ("/api/media/album?../../../etc/passwd", 400),
+            ("/api/album?../../../etc/passwd", 400),
             # Very long path
-            (f'/api/media/album?{"x" * 1000}', 404),
+            (f'/api/album?{"x" * 1000}', 404),
         ]
 
         conn = HTTPConnection("localhost", MEDIASERVER_PORT)
@@ -256,10 +256,12 @@ class TestMediaServer(unittest.TestCase):
         self.assertEqual(response.status, 200)
         conn.close()
 
-        # Try to make another request - should fail
+        # Give server time to shut down
         import time
 
         time.sleep(1)  # Give server time to shut down
+
+        # Try to make another request - should fail
         conn = HTTPConnection("localhost", MEDIASERVER_PORT)
         with self.assertRaises(ConnectionRefusedError):
             conn.request("GET", "/")

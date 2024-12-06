@@ -1,7 +1,7 @@
 """Unit tests for URL validation utilities."""
 
 import unittest
-from urllib.parse import urljoin, quote
+from urllib.parse import quote
 from medialocate.util.url_validator import (
     validate_path,
     validate_query,
@@ -65,7 +65,7 @@ class TestUrlValidator(unittest.TestCase):
             ("../secret/file.jpg", False, True, True),
             ("./config/file.jpg", False, True, True),
             ("//etc/passwd", False, True, True),
-            ("%2E%2E%25tosecretplace", False, True, True),  # Encoded ../
+            ("%2E%2E%2Ftosecretplace", False, True, True),  # Encoded ../
             # Invalid UTF-8 and percent encoding
             ("invalid_utf8_%ff.jpg", False, True, True),  # Invalid UTF-8
             ("invalid_utf8_%c3.jpg", False, True, True),  # Incomplete UTF-8
@@ -105,7 +105,7 @@ class TestUrlValidator(unittest.TestCase):
             test_case for test_case in self.path_test_cases if test_case[2]
         ]
         for path, expected_result, _, _ in path_test_cases:
-            is_valid, message = validate_path(path)
+            is_valid, _, message = validate_path(path)
             self._check_result(expected_result, is_valid, message, "Path", path)
 
     def test_query_validation(self):
@@ -115,7 +115,7 @@ class TestUrlValidator(unittest.TestCase):
             test_case for test_case in self.query_test_cases if test_case[2]
         ]
         for query, expected_result, _, _ in query_test_cases:
-            is_valid, message = validate_query(query)
+            is_valid, _, message = validate_query(query)
             self._check_result(expected_result, is_valid, message, "Query", query)
 
     def test_url_validation_with_path_and_query(self):
@@ -130,7 +130,7 @@ class TestUrlValidator(unittest.TestCase):
                 url = b"http://test.org/" + path
             else:
                 url = "http://test.org/" + path
-            is_valid, message = validate_url(url)
+            is_valid, _, _, message = validate_url(url)
             self._check_result(path_expected_result, is_valid, message, "Url", url)
 
             query_test_cases = [
@@ -142,27 +142,27 @@ class TestUrlValidator(unittest.TestCase):
                 else:
                     url_w_query = url + "?" + query
                 expected = path_expected_result and query_expected_result
-                is_valid, message = validate_url(url_w_query)
+                is_valid, _, _, message = validate_url(url_w_query)
                 self._check_result(expected, is_valid, message, "Url", url_w_query)
 
     def test_edge_cases(self):
         """Test edge cases and boundary conditions."""
 
         # Empty inputs
-        is_valid, _ = validate_url("")
+        is_valid, _, _, _ = validate_url("")
         self.assertFalse(is_valid, "Empty URL should be invalid")
 
-        is_valid, _ = validate_path("")
+        is_valid, _, _ = validate_path("")
         self.assertTrue(is_valid, "Empty path should be valid")
 
         # Very long inputs
-        long_url = "http://example.com/" + "x" * 2000
-        is_valid, _ = validate_url(long_url)
-        self.assertTrue(is_valid, "URL with 2000 characters should be valid")
-
         long_path = "/path/" + "x" * 2000
-        is_valid, _ = validate_path(long_path)
+        is_valid, _, _ = validate_path(long_path)
         self.assertTrue(is_valid, "Path with 2000 characters should be valid")
+
+        long_url = "http://example.com/" + "x" * 2000
+        is_valid, _, _, _ = validate_url(long_url)
+        self.assertTrue(is_valid, "URL with 2000 characters should be valid")
 
 
 if __name__ == "__main__":

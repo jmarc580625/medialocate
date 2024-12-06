@@ -1,5 +1,4 @@
 import unittest
-import pathlib
 import hashlib
 from medialocate.util.file_naming import to_posix, to_uri, get_hash, get_extension
 
@@ -121,10 +120,10 @@ class TestFileNaming(unittest.TestCase):
     def test_to_posix_special_chars(self):
         # Test paths with special characters
         test_cases = {
-            "C:\\Users\\test user\\my file.txt": "C:/Users/test user/my file.txt",
-            "C:\\Users\\test\\path with spaces\\file.txt": "C:/Users/test/path with spaces/file.txt",
-            "C:\\Users\\test\\path_with_underscore\\file.txt": "C:/Users/test/path_with_underscore/file.txt",
-            "C:\\Users\\test\\path-with-dash\\file.txt": "C:/Users/test/path-with-dash/file.txt",
+            "C:\\Test\\my file.txt": "C:/Test/my file.txt",
+            "C:\\Test\\path with spaces\\file.txt": "C:/Test/path with spaces/file.txt",
+            "C:\\Test\\path_with_underscore\\file.txt": "C:/Test/path_with_underscore/file.txt",
+            "C:\\Test\\path-with-dash\\file.txt": "C:/Test/path-with-dash/file.txt",
         }
         for input_path, expected in test_cases.items():
             with self.subTest(input_path=input_path):
@@ -148,9 +147,9 @@ class TestFileNaming(unittest.TestCase):
     def test_to_uri_special_chars(self):
         # Test URI conversion with special characters
         special_paths = {
-            "C:\\Users\\test user\\file.txt": "file:///C:/Users/test%20user/file.txt",
-            "C:\\Users\\test\\my documents\\file.txt": "file:///C:/Users/test/my%20documents/file.txt",
-            "C:\\Program Files\\My App\\file.txt": "file:///C:/Program%20Files/My%20App/file.txt",
+            "C:\\Test\\test user\\f.txt": "file:///C:/Test/test%20user/f.txt",
+            "C:\\Test\\my docs\\f.txt": "file:///C:/Test/my%20docs/f.txt",
+            "C:\\Test\\My App\\f.txt": "file:///C:/Test/My%20App/f.txt",
         }
         for input_path, expected in special_paths.items():
             with self.subTest(input_path=input_path):

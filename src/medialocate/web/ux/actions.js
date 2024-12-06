@@ -68,7 +68,7 @@ class Menu extends ActionController {
                 var win = open(location, "_self");
                 win.close();
             };
-            xmlhttp.open('GET', SHUTDOWN_API);
+            xmlhttp.open('GET', API_GET_SHUTDOWN);
             xmlhttp.send();
         }
     }
@@ -137,7 +137,7 @@ class AlbumChooser extends ActionController {
             album_chooser.elements.ALBUM_CHOOSER_LIST_ID.appendChild(album_chooser.list);
             album_chooser.elements.ALBUM_CHOOSER_HEADER_ID.innerText = album_chooser.choose_header;
         }
-        xmlhttp.open('GET', LIST_ALBUMS_API);
+        xmlhttp.open('GET', API_GET_ALBUM_LIST);
         xmlhttp.send();
     }
 
@@ -201,10 +201,10 @@ class MediaInfos {
         xmlhttp.onload = function() {
             var medias_info_data = JSON.parse(this.responseText);
             console.debug(this.responseText);
-            var path_to_data = PATH_TO_MEDIA + '/' + album;
+            var path_to_data = API_GET_MEDIA + album;
             media_info.media_helper.add(medias_info_data, path_to_data);
         };
-        xmlhttp.open('GET', GET_MEDIA_INFOS_API + album);
+        xmlhttp.open('GET', API_GET_ALBUM_DESC + album);
         xmlhttp.send();
     }
 

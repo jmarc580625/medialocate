@@ -24,8 +24,8 @@ from medialocate.media.parameters import (
 
 
 @dataclass
-class TestMediaGroup:
-    """Test media group configuration"""
+class MediaGroupFixture:
+    """Test media group data container for configuring test scenarios"""
 
     group_name: str
     media_files: List[str]
@@ -43,12 +43,12 @@ class TestProxyMediaCommand(unittest.TestCase):
 
         # Create test media groups
         self.test_groups = [
-            TestMediaGroup(
+            MediaGroupFixture(
                 group_name="paris_group",
                 media_files=["paris1.jpg", "paris2.jpg"],
                 location={"latitude": 48.8584, "longitude": 2.2945},
             ),
-            TestMediaGroup(
+            MediaGroupFixture(
                 group_name="newyork_group",
                 media_files=["ny1.jpg", "ny2.jpg"],
                 location={"latitude": 40.7128, "longitude": -74.0060},

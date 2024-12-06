@@ -1,3 +1,9 @@
+"""Process files with a given action.
+
+This module provides functionality to process files with configurable actions,
+tracking their status and maintaining counters for various processing states.
+"""
+
 import os
 import logging
 from typing import Dict, Optional, Callable, Any
@@ -7,15 +13,19 @@ from medialocate.store.dict import DictStore
 
 
 class ActionControler:
-    """
-    Process files with a given action.
+    """Process files with a given action.
+
+    This class provides functionality to process files with configurable actions,
+    tracking their status and maintaining counters for various processing states.
     """
 
     # Counter names
     RECOVERED = "recovered"  # number of files with a recorded status
     RECIEVED = "recieved"  # number of files to process
     RECORDED = "recorded"  # number of files with a recorded status
-    REPAIRED = "repaired"  # number of files with a recorded status "error", action performed
+    REPAIRED = (
+        "repaired"  # number of files with a recorded status "error", action performed
+    )
     PROCESSED = "processed"  # number of files processed
     IGNORED = "ignored"  # number of files ignored
     SUCCEEDED = "succeeded"  # number of files processed with success
@@ -116,20 +126,20 @@ class ActionControler:
             self.action = action
 
     def __enter__(self) -> "ActionControler":
+        """Enter the context manager."""
         return self
 
     def __exit__(self, *args: Any) -> None:
+        """Exit the context manager."""
         self.counters[ActionControler.SAVED] = len(self.store)
         self.store.close()
 
     def get_counters(self) -> Dict[str, int]:
+        """Return the current counter values."""
         return self.counters
 
     def clean(self) -> None:
-        """
-        Remove status which value has no corresponding file.
-        No further file processing is made.
-        """
+        """Clean up resources and reset counters."""
         to_remove = []
         for status in ProcessingStatus.getAllFromStore(self.store):
             if not os.path.isfile(status.getFilename()):
@@ -139,10 +149,7 @@ class ActionControler:
             self.counters[ActionControler.DELETED] += 1
 
     def drop(self) -> None:
-        """
-        Remove all status.
-        No further file processing is made.
-        """
+        """Remove all status."""
         self.store.clear()
 
     def process(self, file_to_process: str) -> None:

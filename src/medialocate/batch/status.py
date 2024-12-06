@@ -1,3 +1,9 @@
+"""Module for managing file processing status in batch operations.
+
+This module provides functionality to track and manage the processing state of files,
+including their current status, timestamps, and related metadata.
+"""
+
 import time
 from enum import Enum
 from typing import Iterator, ClassVar, Dict, Any, List, Optional
@@ -6,8 +12,15 @@ from medialocate.util.file_naming import get_hash, to_posix
 
 
 class ProcessingStatus:
-    # inner class
+    """Manages the processing status of a file in the batch system.
+
+    This class tracks the state, timestamp, and metadata of a file being processed,
+    providing methods to update and query its status.
+    """
+
     class State(Enum):
+        """Enumeration of possible processing states for a file."""
+
         # ProcessingStatus values (immutable)
         DONE = "done"
         IGNORE = "ignore"
@@ -15,10 +28,12 @@ class ProcessingStatus:
         ERROR = "error"
 
         def __str__(self) -> str:
+            """Convert state to string representation."""
             return self.value
 
         @classmethod
         def values(cls) -> List[str]:
+            """Get list of all state values as strings."""
             return [state.value for state in cls]
 
     # class attributes
@@ -32,15 +47,6 @@ class ProcessingStatus:
         _time_key: 0.0,
     }
 
-    # instance attributes
-    store: DictStore  # storage manager
-    key: str  # file name hash
-    filename: str  # file name (immutable)
-    state: State  # file processing state
-    time: float  # last modification time
-    _isNew: bool  # indicates new ProcessingStatus
-    _isUpdated: bool  # indicates modified ProcessingStatus
-
     def __init__(
         self,
         store: DictStore,
@@ -49,6 +55,15 @@ class ProcessingStatus:
         filename: str,
         time_val: Optional[float] = None,
     ) -> None:
+        """Initialize a new ProcessingStatus instance.
+
+        Args:
+            store: Storage manager for status information
+            key: File name hash
+            state: Initial processing state
+            filename: Name of the file being processed
+            time_val: Last modification time (defaults to current time)
+        """
         self.store = store
         self.key = key
         self.filename = to_posix(filename)
@@ -61,6 +76,7 @@ class ProcessingStatus:
 
     @classmethod
     def filename_hash(cls, filename: str) -> str:
+        """Compute the hash of a file name."""
         return get_hash(filename)
 
     @classmethod
@@ -69,6 +85,15 @@ class ProcessingStatus:
         store: DictStore,
         key: str,
     ) -> Optional["ProcessingStatus"]:
+        """Retrieve a ProcessingStatus instance from storage.
+
+        Args:
+            store: Storage manager
+            key: File name hash
+
+        Returns:
+            ProcessingStatus instance if found, otherwise None
+        """
         dict_data = store.get(key)
         if dict_data:
             status = cls(
@@ -87,6 +112,14 @@ class ProcessingStatus:
         cls,
         store: DictStore,
     ) -> Iterator["ProcessingStatus"]:
+        """Retrieve all ProcessingStatus instances from storage.
+
+        Args:
+            store: Storage manager
+
+        Yields:
+            ProcessingStatus instances
+        """
         for key, dict_data in store.items():
             status = cls(
                 store,
@@ -100,28 +133,43 @@ class ProcessingStatus:
 
     @classmethod
     def deleteAll(cls, store: DictStore) -> None:
+        """Remove all ProcessingStatus instances from storage.
+
+        Args:
+            store: Storage manager
+        """
         store.clear()
 
     # instance methods
 
     def getFilename(self) -> str:
+        """Get the name of the file being processed."""
         return self.filename
 
     def getState(self) -> State:
+        """Get the current processing state."""
         return self.state
 
     def getTime(self) -> float:
+        """Get the last modification time."""
         return self.time
 
     def setState(self, state: State) -> None:
+        """Update the processing state.
+
+        Args:
+            state: New processing state
+        """
         self.state = state
         self._isUpdated = True
 
     def delete(self) -> None:
+        """Remove this ProcessingStatus instance from storage."""
         if not self._isNew:
             self.store.pop(self.key)
 
     def update(self) -> None:
+        """Update this ProcessingStatus instance in storage."""
         if self._isUpdated or self._isNew:
             self.time = time.time()
             self.store.set(

@@ -1,7 +1,7 @@
-"""
-Location handling module for geolocation operations.
-"""
+"""Location handling module for geolocation operations."""
 
-from typing import List, Dict, Any
+from typing import List
 
-__all__: List[str] = []  # Add your public exports here
+from medialocate.location.gps import GPS
+
+__all__: List[str] = ["GPS"]  # Add your public exports here

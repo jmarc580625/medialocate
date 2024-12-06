@@ -2,12 +2,13 @@ import os
 import time
 import unittest
 import tempfile
+from typing import Optional
 from medialocate.finder.file import FileFinder
 
 
 class TestFileFinder(unittest.TestCase):
     # class variables
-    working_directory: str = None
+    working_directory: Optional[str] = None
     root_dirname = "root"
 
     file_prefix = "test"
@@ -29,7 +30,6 @@ class TestFileFinder(unittest.TestCase):
     min_age = 0
 
     # instance variables
-    root_dirname: str
     filters: dict
     expected_files_count: dict
 

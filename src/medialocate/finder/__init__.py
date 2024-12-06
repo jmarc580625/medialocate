@@ -1,7 +1,7 @@
-"""
-File finder module for discovering media files.
-"""
+"""File finder module for discovering media files."""
 
-from typing import List, Dict, Any
+from typing import List
 
-__all__: List[str] = []  # Add your public exports here
+from medialocate.finder.file import FileFinder
+
+__all__: List[str] = ["FileFinder"]  # Add your public exports here

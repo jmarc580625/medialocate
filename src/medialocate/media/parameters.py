@@ -1,3 +1,10 @@
+"""Configuration parameters for the MediaLocate application.
+
+This module defines constants and paths used throughout the MediaLocate application,
+including directory structures, file names, and resource locations. It centralizes
+all configuration parameters to maintain consistency across the application.
+"""
+
 import os
 
 RESSOURCES_ROOT_DIR = "res"

@@ -1,16 +1,32 @@
+"""HTTP server implementation for serving media files and location data through a web interface.
+
+This module provides a web server that serves media files and associated location data through
+a RESTful API. It includes the following main components:
+
+- MediaServer: Main server class that handles initialization and server lifecycle
+- ServiceHandler: HTTP request handler with support for media streaming and API endpoints
+- LimitedFileReader: Utility class for controlled streaming of large media files
+
+The server supports:
+- Media file streaming with range requests
+- Album management and listing
+- Session persistence
+- Browser-based interface
+"""
+
 import os
-import sys
+import io
 import json
 import logging
 import argparse
+import threading
 import webbrowser
 import socketserver
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
+from pathlib import Path
 from urllib.parse import urlparse
-from urllib.request import urlopen, Request
-from urllib.error import URLError
 from http.server import SimpleHTTPRequestHandler
-from medialocate.util.file_naming import get_hash, to_posix, to_uri
+from medialocate.util.file_naming import get_hash, to_posix
 from medialocate.util.url_validator import validate_query
 from medialocate.finder.file import FileFinder
 from medialocate.media.parameters import MEDIALOCATION_STORE_NAME
@@ -43,83 +59,146 @@ MEDIASERVER_UX_DIR = "ux"
 MEDIASERVER_LOGGER = MEDIASERVER
 MEDIASERVER_SESSION_DIR = f".{MEDIASERVER}"
 
-"""
-SimpleHTTPRequestHandler.extensions_map.update({
-    '': 'application/octet-stream',
-    '.json': 'application/json',
-    '.html': 'text/html',
-    '.css': 'text/css',
-    '.js': 'application/x-javascript',
-    '.wasm': 'application/wasm',
-    '.svg': 'image/svg+xml',
-})
-"""
-
 
 class MediaHTTPServer(socketserver.TCPServer):
+    """TCP server implementation for handling media file requests.
+
+    Extends TCPServer to provide media file serving capabilities with support for
+    working directory, data root directory, and items dictionary management.
+    """
+
     def __init__(self, server_address, RequestHandlerClass):
+        """Initialize the MediaHTTPServer.
+
+        Args:
+            server_address: Tuple of (host, port) for the server to listen on
+            RequestHandlerClass: Handler class for processing requests
+        """
         self.working_directory = ""
         self.data_root_dir = ""
         self.items_dict = {}
         super().__init__(server_address, RequestHandlerClass)
 
 
+class LimitedFileReader(io.RawIOBase):
+    """A file-like object that limits the number of bytes that can be read."""
+
+    def __init__(self, file_obj, remaining):
+        """Initialize the LimitedFileReader.
+
+        Args:
+            file_obj: The file object to read from
+            remaining: The maximum number of bytes that can be read
+        """
+        super().__init__()
+        self.file_obj = file_obj
+        self.remaining = remaining
+
+    def readable(self) -> bool:
+        """Check if the file object is readable.
+
+        Returns:
+            bool: Always returns True as this is a read-only file object
+        """
+        return True
+
+    def read(self, size=None):
+        """Read up to size bytes from the file object.
+
+        Args:
+            size: The maximum number of bytes to read. If None, read up to remaining bytes.
+
+        Returns:
+            bytes: The bytes read from the file object
+        """
+        if size is None or size > self.remaining:
+            size = self.remaining
+        if size <= 0:
+            return b""
+        data = self.file_obj.read(size)
+        self.remaining -= len(data)
+        return data
+
+
 class ServiceHandler(SimpleHTTPRequestHandler):
+    """HTTP request handler for media file serving and API endpoints.
+
+    Extends SimpleHTTPRequestHandler to provide specialized handling for
+    media files, album management, and API endpoints.
+    """
+
     log: logging.Logger = logging.getLogger(MEDIASERVER_LOGGER)
 
+    def _to_album_local_path(self, path: Path) -> str:
+        path = Path(self.server.data_root_dir) / path  # type: ignore
+        try:
+            path.resolve(strict=True)
+        except Exception as e:
+            self.log.error(f"Path resolution error: {str(e)}")
+            return ""
+        return str(path)
+
     def translate_path(self, path: str) -> str:
+        """Translate URL paths to filesystem paths.
+
+        Args:
+            path: URL path to translate
+
+        Returns:
+            str: Filesystem path or empty string if invalid
+        """
         if path.startswith("/media/"):
-            self.log.debug(f"translate_path from: path={path}")
-            path = path.replace("/media/", "")
-            path = super().translate_path(path)
-            path = path[len(self.server.working_directory) + 1 :]  # type: ignore
-            path = os.path.join(self.server.data_root_dir, path)  # type: ignore
-            self.log.debug(f"translate_path to: path={path}")
-            return path
+            striped_path = path.replace("/media/", "")
+
+            # empty url query
+            if not striped_path:
+                self.send_error(400, "Media file name missing")
+                return ""
+
+            # Prevent directory traversal
+            valid, unquoted_path, message = validate_query(striped_path)
+            if not valid:
+                self.send_error(400, message)
+                return ""
+
+            path = self._to_album_local_path(
+                Path(unquoted_path) if unquoted_path else Path()
+            )
+            return path if path else ""
         else:
             return super().translate_path(path)
 
-    def _album_query_2_path(
-        self, album_resource_name: str
-    ) -> tuple[Optional[str], int, str]:
+    def _validate_query(self, query_string: str) -> Tuple[bool, int, str]:
         # empty url query
-        if not album_resource_name:
-            return (None, 400, "Missing query")
+        if not query_string:
+            return (False, 400, "Missing query")
 
         # Prevent directory traversal
-        is_valid, message = validate_query(album_resource_name)
-        if not is_valid:
-            return (None, 400, message)
+        valid, unquoted_query, message = validate_query(query_string)
+        if not valid:
+            return (False, 400, message)
+        return (True, 200, "")
 
-        # check album exist
-        from pathlib import Path
-
-        album_name = Path(album_resource_name).parts[0]
-        if album_name not in self.server.items_dict:  # type: ignore
-            return (None, 404, f"URL error: {album_resource_name} not found")
-
-        # check file exists
-        root_dir = self.server.data_root_dir  # type: ignore
-        path = to_posix(os.path.join(root_dir, album_resource_name))
-        if not os.path.exists(path):
-            return (None, 404, f"URL error: {album_resource_name} not found")
-
-        return (path, 0, "")
-
-    def _validate_url_scheme(self, url: str) -> bool:
-        """Validate URL scheme"""
-        try:
-            parsed = urlparse(url)
-            if parsed.scheme not in ["http", "https", "file"]:
-                return False
-            return True
-
-        except Exception as e:
-            self.log.error(f"URL validation error: {str(e)}")
-            return False
+    def _get_content_type(self, path):
+        """Determine content type based on file extension."""
+        ext = os.path.splitext(path)[1].lower()
+        content_types = {
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".png": "image/png",
+            ".gif": "image/gif",
+            ".mp4": "video/mp4",
+            ".avi": "video/x-msvideo",
+            ".mov": "video/quicktime",
+        }
+        return content_types.get(ext, "application/octet-stream")
 
     def do_GET(self) -> None:
-        """Handle GET requests with special API endpoints and file serving."""
+        """Handle GET requests for files and API endpoints.
+
+        Processes requests for media files, album data, and server control.
+        Supports range requests for media streaming.
+        """
         try:
             parsed = urlparse(self.path)
             path = parsed.path
@@ -128,12 +207,12 @@ class ServiceHandler(SimpleHTTPRequestHandler):
             # Handle special API endpoints
             if path == "/api/shutdown":
                 self._handle_shutdown()
-            elif path == "/api/media/albums":
-                self._handle_albums()
-            elif path == "/api/media/album":
+            elif path == "/api/albums":
+                self._handle_album_list()
+            elif path == "/api/album":
                 self._handle_album(query_string)
-            elif path == "/proxy":
-                self._handle_proxy(query_string)
+            elif path == "/api/media":
+                self._handle_media(query_string)
             else:
                 # Handle regular file serving
                 super().do_GET()
@@ -141,68 +220,81 @@ class ServiceHandler(SimpleHTTPRequestHandler):
             self.log.error(f"Error handling request: {str(e)}")
             self.send_error(500, str(e))
 
-    def _handle_proxy(self, query_string: str) -> None:
-        """Handle proxy requests with support for range requests and streaming."""
-        self.log.debug(f"GET: /proxy?{query_string}")
-
-        path, code, message = self._album_query_2_path(query_string)
-        if path is None:
-            self.send_error(code, message)
-            return
-
-        url = to_uri(path)
-        # Validate URL scheme and path
-        if not self._validate_url_scheme(url):
-            self.send_error(400, "Invalid URL")
-            return
-
+    def _handle_media(self, query_string: str) -> None:
+        """Handle media file requests with support for range requests and streaming."""
         try:
-            # Get range header if present
+            self.log.debug(f"GET: /media?{query_string}")
+
+            # empty url query
+            if not query_string:
+                self.send_error(400, "Missing query")
+                return
+
+            # check query validity and return unquoted query
+            valid, query, message = validate_query(query_string)
+            if not valid:
+                self.send_error(400, message)
+                return
+
+            """
+            album_name = os.path.dirname(query)
+            media_name = os.path.basename(query)
+
+            # check album exist
+            album_dict = self.server.items_dict.get(album_name, None) # type: ignore
+            if not album_dict:
+                self.send_error(404, f"URL error: album {album_name} not found")
+                return
+            """
+
+            # check media file exists
+            path_to_media = self._to_album_local_path(Path(query) if query else Path())
+            if not path_to_media:
+                self.send_error(404, "File not found")
+                self.log.error(f"File not found: {query}")
+                return
+
+            file_size = os.path.getsize(path_to_media)
+            content_type = self._get_content_type(path_to_media)
             range_header = self.headers.get("Range")
 
-            # Use Request to set User-Agent and other headers
-            headers = {
-                "User-Agent": "MediaLocate/1.0",
-            }
             if range_header:
-                headers["Range"] = range_header
+                # Parse range header
+                try:
+                    ranges = range_header.replace("bytes=", "").split("-")
+                    start = int(ranges[0])
+                    end = int(ranges[1]) if ranges[1] else file_size - 1
+                except (ValueError, IndexError):
+                    self.send_error(400, "Invalid range header")
+                    return
 
-            req = Request(url, headers=headers)
+                # Send partial content
+                self.send_response(206)
+                self.send_header("Content-Range", f"bytes {start}-{end}/{file_size}")
+                self.send_header("Content-Length", str(end - start + 1))
+            else:
+                # Send full content
+                self.send_response(200)
+                self.send_header("Content-Length", str(file_size))
 
-            # Open URL with timeout
-            with urlopen(
-                req, timeout=10
-            ) as response:  # nosec B310 - URL scheme is validated
-                content_length = response.headers.get("Content-Length")
-                content_type = response.headers.get(
-                    "Content-Type", "application/octet-stream"
-                )
-                accept_ranges = response.headers.get("Accept-Ranges")
+            self.send_header("Accept-Ranges", "bytes")
+            self.send_header("Content-Type", content_type)
+            self.end_headers()
 
-                # Handle range response
-                if range_header and response.status == 206:  # Partial Content
-                    self.send_response(206)
-                    self.send_header("Content-Range", response.headers["Content-Range"])
-                    self.send_header("Content-Length", content_length)
-                else:
-                    self.send_response(200)
-                    if content_length:
-                        self.send_header("Content-Length", content_length)
-                    if accept_ranges:
-                        self.send_header("Accept-Ranges", accept_ranges)
+            # Stream the file
+            with open(path_to_media, "rb") as f:
+                if range_header:
+                    f.seek(start)
+                    # Create a length-limited file-like object for partial content
+                    file_obj = LimitedFileReader(f, end - start + 1)
+                    f = io.BufferedReader(file_obj)
+                self._stream_response(f, content_type)
 
-                self.send_header("Content-type", content_type)
-                self.end_headers()
-
-                # Stream the response
-                self._stream_response(response, content_type)
-
-        except URLError as e:
-            self.log.error(f"URL error: {str(e)}")
-            self.send_error(400, f"URL error: {str(e)}")
         except Exception as e:
-            self.log.error(f"Proxy error: {str(e)}")
-            self.send_error(500, f"Proxy error: {str(e)}")
+            # Log the full error with the Unicode path
+            self.log.error(f"File error: {str(e)}")
+            # Send a simplified ASCII-safe error message
+            self.send_error(500, "Internal server error")
 
     def _handle_shutdown(self) -> None:
         """Handle shutdown API endpoint."""
@@ -211,13 +303,15 @@ class ServiceHandler(SimpleHTTPRequestHandler):
         self.send_header("Content-type", "application/json")
         self.end_headers()
         self.wfile.write(bytes('{"shutdown":"ack"}', "utf-8"))
-        sys.exit(0)
 
-    def _handle_albums(self) -> None:
+        # Start shutdown in a separate thread after response is sent
+        threading.Thread(target=self.server.shutdown, daemon=True).start()
+
+    def _handle_album_list(self) -> None:
         """Handle albums API endpoint."""
         self.log.debug("GET: /api/media/albums")
         self.send_response(200)
-        self.send_header("Content-type", "application/json")
+        self.send_header("Content-Type", "application/json")
         self.end_headers()
         out = json.dumps(self.server.items_dict)  # type: ignore
         self.wfile.write(bytes(out, "utf-8"))
@@ -226,14 +320,29 @@ class ServiceHandler(SimpleHTTPRequestHandler):
         """Handle single album API endpoint."""
         self.log.debug(f"GET: /api/media/album?{query_string}")
 
-        path, code, message = self._album_query_2_path(query_string)
-        if path is None:
-            self.send_error(code, message)
+        # empty url query
+        if not query_string:
+            self.send_error(400, "Missing query")
             return
 
-        path = os.path.join(path, self.server.items_dict[query_string])  # type: ignore
-        if not os.path.isfile(path):
-            self.send_error(404, "Album not found")
+        # Prevent directory traversal
+        valid, _, message = validate_query(query_string)
+        if not valid:
+            self.send_error(400, message)
+            return
+
+        # check album exist
+        album_dict = self.server.items_dict.get(query_string, None)  # type: ignore
+        if not album_dict:
+            self.send_error(404, f"URL error: album {query_string} not found")
+            return
+
+        # check album dict exist
+        album_dict_path = Path(query_string) / Path(album_dict)
+        path = self._to_album_local_path(album_dict_path)
+
+        if path is None:
+            self.send_error(404, f"URL error: album file {path} not found")
             return
 
         try:
@@ -270,15 +379,12 @@ class ServiceHandler(SimpleHTTPRequestHandler):
 
 
 class MediaServer:
-    port: int
-    log: logging.Logger
-    cache_dir: str
-    working_directory: str
-    data_root_dir: str
-    session_cache: str
-    items_dict: Dict[str, str]
-    httpd: Optional[socketserver.TCPServer]
-    launch_browser: bool
+    """Media server implementation for serving files and location data.
+
+    Provides a web interface for accessing media files and associated location
+    data through a RESTful API. Supports file streaming, album management,
+    and session persistence.
+    """
 
     def __init__(
         self,
@@ -287,6 +393,14 @@ class MediaServer:
         log: Optional[logging.Logger] = None,
         launch_browser: bool = False,
     ) -> None:
+        """Initialize the media server.
+
+        Args:
+            port: Port number to listen on
+            data_root_dir: Root directory containing media files
+            log: Optional logger instance
+            launch_browser: Whether to launch browser on startup
+        """
         self.port = port
         self.log = log or logging.getLogger(MEDIASERVER_LOGGER)
         self.cache_dir = os.path.join(os.path.expanduser("~"), MEDIASERVER_SESSION_DIR)
@@ -303,6 +417,14 @@ class MediaServer:
         self.launch_browser = launch_browser
 
     def get_media_sources(self, directory: str) -> Dict[str, str]:
+        """Get media sources from the specified directory.
+
+        Args:
+            directory: Directory to scan for media files
+
+        Returns:
+            Dict mapping album paths to media file locations
+        """
         path_to_data_length = len(directory.split(os.sep))
         items_dict: Dict[str, str] = {}
 
@@ -320,23 +442,31 @@ class MediaServer:
         return items_dict
 
     def save_media_sources(self, items_dict: Dict[str, str]) -> None:
+        """Save media sources to the session cache.
+
+        Args:
+            items_dict: Dictionary of media sources to save
+        """
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
         with open(self.session_cache, "w") as f:
             json.dump(self.items_dict, f, indent=2)
 
     def retrieve_media_sources(self) -> None:
+        """Load media sources from the session cache if available."""
         if os.path.exists(self.session_cache):
             with open(self.session_cache, "r") as f:
                 self.items_dict = json.load(f)
 
     def initiate(self) -> None:
+        """Initialize the server by loading or scanning media sources."""
         self.retrieve_media_sources()
         if not self.items_dict:
             self.items_dict = self.get_media_sources(self.data_root_dir)
             self.save_media_sources(self.items_dict)
 
     def start(self) -> None:
+        """Start the media server and begin serving requests."""
         self.initiate()
         os.chdir(self.working_directory)
         with MediaHTTPServer(("", self.port), ServiceHandler) as httpd:
@@ -356,6 +486,14 @@ class MediaServer:
 def main(
     port: int, directory: str, log: logging.Logger, launch_browser: bool = False
 ) -> None:
+    """Start the media server with the specified configuration.
+
+    Args:
+        port: Port number to listen on
+        directory: Root directory containing media files
+        log: Logger instance for output
+        launch_browser: Whether to launch browser on startup
+    """
     server = MediaServer(port, directory, log)
     server.start()
 

@@ -1,3 +1,10 @@
+"""Media file grouping utility based on GPS location proximity.
+
+This module provides functionality to group media files based on their GPS location
+data. It allows users to specify directories to scan and a distance threshold for
+grouping files that are geographically close to each other.
+"""
+
 import os
 import glob
 import logging
@@ -7,6 +14,17 @@ from medialocate.media.group_proxy import MediaProxiesControler
 
 
 def get_directories(names: list[str]) -> set[str]:
+    """Get a set of directories from the provided names.
+
+    If no names are provided, uses the current working directory.
+    Expands glob patterns in the provided names.
+
+    Args:
+        names: List of directory names or glob patterns
+
+    Returns:
+        set[str]: Set of resolved directory paths
+    """
     directories = set()
     if len(names) == 0:
         directories.add(os.getcwd())
@@ -17,6 +35,11 @@ def get_directories(names: list[str]) -> set[str]:
 
 
 def main():
+    """Run the media file grouping utility.
+
+    Parses command line arguments and executes the media file grouping process.
+    Supports specifying distance threshold, verbosity level, and target directories.
+    """
     parser = argparse.ArgumentParser(
         description="groups media files by gps location proximity"
     )
