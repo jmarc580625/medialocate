@@ -19,7 +19,7 @@ class TestProcessFiles(unittest.TestCase):
     """Integration tests for process_files command"""
 
     def setUp(self):
-        self.memory_dir = ".process_store"
+        self.test_dir = tempfile.mkdtemp()
         self.purge_mode = False
         self.clear_mode = False
         self.force_option = False
@@ -29,13 +29,14 @@ class TestProcessFiles(unittest.TestCase):
 
         """Create test environment with controlled directory structure"""
         # Create test root directory for test files
-        self.test_root = tempfile.mkdtemp()
+        self.test_root = self.test_dir
 
         # changes working directory for test root
         self.cwd = os.getcwd()
         os.chdir(self.test_root)
 
         # Create memory directory for test files
+        self.memory_dir = os.path.join(self.test_root, ".process_store")
         os.makedirs(self.memory_dir, exist_ok=True)
 
     def tearDown(self):

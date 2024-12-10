@@ -2,6 +2,14 @@
 sandbox
 sandbox/.medialocate/
 sandbox/medialocate.html
+install_test_env/
+
+# Backup and temporary files
+*.old
+*.bak
+*copy*
+*copy.*
+bckp/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

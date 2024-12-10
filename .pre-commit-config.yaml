@@ -9,45 +9,39 @@ repos:
     -   id: debug-statements
 
 -   repo: https://github.com/psf/black
-    rev: 24.10.0  # Updated to match poetry
+    rev: 24.10.0
     hooks:
     -   id: black
         language_version: python3
 
 -   repo: https://github.com/PyCQA/flake8
-    rev: 7.1.1  # Updated to match poetry
+    rev: 7.1.1
     hooks:
     -   id: flake8
         additional_dependencies: [flake8-docstrings]
-        exclude: ^(tests/|conftest\.py)
+        exclude: ^(tests/|conftest\.py|scripts/)
+        args: [--max-line-length=100, --extend-ignore=E203]
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.13.0  # Updated to match poetry
+    rev: v1.13.0
     hooks:
     -   id: mypy
-        exclude: ^(tests/|conftest\.py)
+        exclude: ^(tests/|conftest\.py|scripts/)
         additional_dependencies:
         - types-PyYAML
-
--   repo: local
-    hooks:
-    -   id: pytest-check
-        name: pytest with coverage
-        entry: poetry run pytest
-        language: system
-        types: [python]
-        pass_filenames: false
-        args: [
-            "--cov=src/medialocate",
-            "--cov-report=term-missing",
-            "--cov-fail-under=80"
-        ]
+        args: [--ignore-missing-imports, --allow-untyped-defs]
 
 -   repo: https://github.com/PyCQA/bandit
     rev: 1.8.0
     hooks:
     -   id: bandit
-        args: ["-c", "pyproject.toml"]
-        additional_dependencies: ["bandit[toml]"]
-        # Security checks less relevant for tests
-        exclude: ^(test/|tests/)
+        exclude: ^(tests/|conftest\.py|scripts/)
+
+-   repo: local
+    hooks:
+    -   id: pytest
+        name: pytest
+        entry: poetry run pytest -v --ignore=tests/release_validation
+        language: system
+        pass_filenames: false
+        always_run: true

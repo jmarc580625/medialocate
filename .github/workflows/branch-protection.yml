@@ -1,0 +1,45 @@
+name: Branch Protection Rules
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  branch-protection:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repository
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Prevent force pushes (simulated through workflow)
+      - name: Prevent Force Pushes
+        run: |
+          if [[ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]]; then
+            echo "Error: Force push detected"
+            exit 1
+          fi
+
+      # Require pull request for main branch
+      - name: Validate PR for Main Branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "Direct pushes to main are not allowed. Use pull requests."
+          exit 1
+
+      # Additional protection: require linear history
+      - name: Check Linear History
+        run: |
+          merge_commits=$(git rev-list --merges main)
+          if [ -n "$merge_commits" ]; then
+            echo "Error: Merge commits are not allowed. Use rebase or squash."
+            exit 1
+          fi

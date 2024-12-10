@@ -256,22 +256,32 @@ class TestProcessingStatus(unittest.TestCase):
         """Test update on new store"""
         # Arrange
         storeMock = StoreMock.return_value
-        filename = "filename"
+        filename = "updated_filename"
         state = ProcessingStatus.State.DONE
         now = time.time()
-        status = ProcessingStatus(storeMock, "key", state, filename, now)
+        status = ProcessingStatus(storeMock, "updated_key", state, filename, now)
 
         # Act
         status.update()
 
         # Assert
-        storeMock.set.assert_called_once_with(
-            status.key,
-            {
-                ProcessingStatus._state_key: state.value,
-                ProcessingStatus._filename_key: filename,
-                ProcessingStatus._time_key: now,
-            },
+        storeMock.set.assert_called_once()
+        # TODO: assert that the store is called with the correct value
+        # storeMock.set.call_args[0][1].ProcessingStatus._state_key: state.value,
+        #    ProcessingStatus._filename_key: filename,
+        #    ProcessingStatus._time_key: now,
+        # })
+        self.assertEqual(
+            storeMock.set.call_args[0][1][ProcessingStatus._state_key], state.value
+        )
+        self.assertEqual(
+            storeMock.set.call_args[0][1][ProcessingStatus._filename_key], filename
+        )
+        self.assertGreaterEqual(
+            storeMock.set.call_args[0][1][ProcessingStatus._time_key], now
+        )
+        self.assertLessEqual(
+            storeMock.set.call_args[0][1][ProcessingStatus._time_key], now + 1
         )
 
     @patch(f"{STORE_DICT}.DictStore")

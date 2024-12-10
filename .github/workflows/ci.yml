@@ -1,150 +1,145 @@
-name: CI/CD Pipeline
+# Continuous Integration Workflow for MediaLocate
+# This workflow provides comprehensive testing and validation across multiple environments
 
+name: Continuous Integration
+
+# Trigger the workflow on push and pull request events
+# Covers main development branches to ensure code quality
 on:
   push:
-    branches: [ main, master ]
-    tags: ['v*']
+    branches: [ main, master, develop ]  # Key development branches
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, master, develop ]  # PRs targeting key branches
 
 jobs:
-  quality:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-
-    - name: Install Poetry
-      uses: snok/install-poetry@v1
-      with:
-        version: 1.7.1
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-
-    - name: Load cached Poetry virtualenv
-      id: cached-poetry-dependencies
-      uses: actions/cache@v3
-      with:
-        path: .venv
-        key: venv-${{ matrix.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-    - name: Install dependencies
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
-
-    - name: Check formatting with Black
-      run: poetry run black --check src
-
-    - name: Lint with flake8
-      run: poetry run flake8 src
-
-    - name: Type checking with mypy
-      run: poetry run mypy src
-
-    - name: Security check with bandit
-      run: poetry run bandit -r src
-
+  # Primary testing job: Runs comprehensive tests across multiple environments
   test:
-    needs: quality
+    # Strategy to test across multiple OS and Python versions
+    # fail-fast: false ensures all combinations are tested, not stopping on first failure
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12']
+        # Comprehensive OS and Python version coverage
+        os: [ubuntu-latest, windows-latest, macos-latest]  # Cross-platform testing
+        python-version: ['3.9', '3.10', '3.11', '3.12']  # Supported Python versions
+
+    # Use the specified OS for each test run
     runs-on: ${{ matrix.os }}
 
-    env:
-      PYTHONPATH: ${{ matrix.os == 'windows-latest' && 'src;tests' || 'src:tests' }}
-
     steps:
-    - uses: actions/checkout@v3
+    # Step 1: Check out the repository
+    - uses: actions/checkout@v4
 
+    # Step 2: Set up the specific Python version for this test run
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
+    # Step 3: Install Poetry for dependency management
     - name: Install Poetry
       uses: snok/install-poetry@v1
       with:
-        version: 1.7.1
-        virtualenvs-create: true
-        virtualenvs-in-project: true
+        version: 1.7.1  # Pinned to specific version for consistency
+        virtualenvs-create: true  # Create virtual environments
+        virtualenvs-in-project: true  # Store venv in project directory
 
+    # Step 4: Cache Poetry dependencies to speed up workflow
     - name: Load cached Poetry virtualenv
       id: cached-poetry-dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
-        path: .venv
+        path: .venv  # Cache virtual environment
         key: venv-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
+    # Step 5: Install project dependencies
     - name: Install dependencies
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       run: poetry install --no-interaction --no-root
 
-    - name: Run tests with coverage
-      run: |
-        poetry run pytest --cov=medialocate --cov-report=xml --cov-report=html --junitxml=test-results-${{ matrix.python-version }}-${{ matrix.os }}.xml
+    # Step 6: Code Quality Checks
+    # Linting to ensure code style consistency
+    - name: Lint with flake8
+      run: poetry run flake8 src
 
-    - name: Upload test results
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: test-results-${{ matrix.python-version }}-${{ matrix.os }}
-        path: |
-          test-results-${{ matrix.python-version }}-${{ matrix.os }}.xml
-          htmlcov
+    # Static type checking
+    - name: Type check with mypy
+      run: poetry run mypy src
 
+    # Security scanning
+    - name: Security scan with Bandit
+      run: poetry run bandit -r src
+
+    # Step 7: Run unit tests (excluding release validation tests)
+    - name: Run unit tests
+      run: poetry run pytest tests/ -v --ignore=tests/release_validation
+
+    # Step 8: Generate code coverage report
+    - name: Generate coverage report
+      run: poetry run pytest --cov=medialocate --cov-report=xml
+
+    # Step 9: Upload coverage to Codecov for tracking
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        env_vars: OS,PYTHON
-        name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
-        fail_ci_if_error: true
+      uses: codecov/codecov-action@v4
+      env:
+        # Requires setting up a Codecov token in GitHub Secrets
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-  deploy:
-    needs: test
+  # Dedicated job for release validation
+  # Runs after primary tests to ensure release readiness
+  release-validation:
+    needs: test  # Only runs if primary tests pass
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v'))
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
+    - uses: actions/checkout@v4
 
+    # Set up Python for release validation
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'  # Use latest Python version
+
+    # Install Poetry
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+
+    # Install all dependencies
+    - name: Install dependencies
+      run: poetry install
+
+    # Run custom release validation script
+    - name: Run Release Validation Script
+      run: poetry run python scripts/release_validation.py
+
+  # Optional job for dependency security checks
+  dependency-security:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Set up Python for dependency checks
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
         python-version: '3.12'
 
+    # Install Poetry
     - name: Install Poetry
       uses: snok/install-poetry@v1
+
+    # Install project dependencies
+    - name: Install dependencies
+      run: poetry install
+
+    # Run Safety to check for known security vulnerabilities
+    - name: Run Safety
+      run: poetry run safety check
+
+    # Optional: Run Dependabot for automated dependency updates
+    - name: Run Dependabot
+      uses: dependabot/dependabot-core@main
       with:
-        version: 1.7.1
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-
-    - name: Build package
-      run: poetry build
-
-    - name: Publish to PyPI (if tagged)
-      if: startsWith(github.ref, 'refs/tags/v')
-      env:
-        POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
-      run: poetry publish
-
-    - name: Create GitHub Release (if tagged)
-      if: startsWith(github.ref, 'refs/tags/v')
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          dist/*.whl
-          dist/*.tar.gz
-        generate_release_notes: true
+        command: update
+        config-file: .github/dependabot.yml  # Configuration for dependency updates

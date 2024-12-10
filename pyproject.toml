@@ -1,9 +1,22 @@
 [tool.poetry]
 name = "medialocate"
 version = "0.1.0"
-description = "A tool for analyzing and grouping media files based on geolocation data"
+description = "A Python tool for analyzing and organizing media files based on geolocation data"
 authors = ["jmarc580625 <jmarc580625+github@gmail.com>"]
 readme = "README.md"
+license = "MIT"
+keywords = ["media", "geolocation", "gps", "exif", "photo-management", "metadata"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Utilities",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
 packages = [
     { include = "medialocate", from = "src" }
 ]
@@ -23,33 +36,9 @@ bandit = "^1.8.0"
 pre-commit = "^3.3.3"
 debugpy = "^1.8.0"
 
-[tool.bandit]
-exclude_dirs = ["tests", "test"]
-
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-addopts = """
-    --cov=src/medialocate
-    --cov-report=term-missing
-    --cov-report=xml
-    --cov-report=html
-    --cov-fail-under=80
-"""
+# Configuration in pytest.ini
 
-[tool.coverage.run]
-source = ["src/medialocate"]
-omit = ["tests/*", "test/*"]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
-    "pass",
-    "raise ImportError"
-]
 
 [build-system]
 requires = ["poetry-core"]

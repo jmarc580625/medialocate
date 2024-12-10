@@ -9,6 +9,7 @@ Tests the integration between:
 """
 
 import os
+import shutil
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -38,8 +39,6 @@ class TestGroupMediaCommand(unittest.TestCase):
 
     def tearDown(self):
         # Clean up temporary test directory
-        import shutil
-
         shutil.rmtree(self.test_dir)
 
     def test_group_media_with_default_args(self):

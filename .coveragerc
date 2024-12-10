@@ -1,0 +1,19 @@
+[run]
+source = src/medialocate
+omit =
+    tests/*
+    scripts/*
+
+[report]
+# Coverage threshold
+fail_under = 80
+show_missing = True
+
+# Lines to exclude from coverage
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    raise NotImplementedError
+    pass
+    if __name__ == .__main__.:
