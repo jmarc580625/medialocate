@@ -3,6 +3,7 @@ sandbox
 sandbox/.medialocate/
 sandbox/medialocate.html
 install_test_env/
+action_plans/
 
 # Backup and temporary files
 *.old
