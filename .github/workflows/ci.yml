@@ -74,16 +74,16 @@ jobs:
     - name: Run unit tests
       run: poetry run pytest tests/ -v --ignore=tests/release_validation
 
-    # Step 8: Generate code coverage report
+    # Step 8: Generate coverage report
     - name: Generate coverage report
-      run: poetry run pytest --cov=medialocate --cov-report=xml
+      run: |
+        poetry run pytest --cov=medialocate --cov-report=term --cov-report=xml
 
-    # Step 9: Upload coverage to Codecov for tracking
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      env:
-        # Requires setting up a Codecov token in GitHub Secrets
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    # Codecov integration to be added later when token is configured
+    # - name: Upload coverage to Codecov
+    #   uses: codecov/codecov-action@v4
+    #   env:
+    #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   # Dedicated job for release validation
   # Runs after primary tests to ensure release readiness
@@ -115,6 +115,7 @@ jobs:
   # Optional job for dependency security checks
   dependency-security:
     runs-on: ubuntu-latest
+    continue-on-error: true  # Make this job optional
 
     steps:
     - uses: actions/checkout@v4
@@ -137,9 +138,9 @@ jobs:
     - name: Run Safety
       run: poetry run safety check
 
-    # Optional: Run Dependabot for automated dependency updates
-    - name: Run Dependabot
-      uses: dependabot/dependabot-core@main
-      with:
-        command: update
-        config-file: .github/dependabot.yml  # Configuration for dependency updates
+    # Dependency automation disabled for now - can be enabled later if needed
+    # - name: Run Dependabot
+    #   uses: dependabot/dependabot-core@main
+    #   with:
+    #     command: update
+    #     config-file: .github/dependabot.yml  # Configuration for dependency updates
