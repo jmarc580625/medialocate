@@ -111,6 +111,13 @@ class TestProcessingStatus(unittest.TestCase):
         # Assert
         self.assertEqual(hash_posix, hash_windows)
 
+        # Additional test with PurePosixPath to simulate Linux behavior
+        from pathlib import PurePosixPath
+
+        with patch("pathlib.Path", PurePosixPath):
+            hash_linux = ProcessingStatus.filename_hash(filename_windows)
+            self.assertEqual(hash_posix, hash_linux)
+
     @patch(f"{STORE_DICT}.DictStore")
     def test_getFromStore(self, StoreMock):
         """ "Test getFromStore"""

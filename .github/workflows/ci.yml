@@ -30,13 +30,19 @@ jobs:
     # Step 1: Check out the repository
     - uses: actions/checkout@v4
 
-    # Step 2: Set up the specific Python version for this test run
+    # Step 2: Install system dependencies
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y exiftool ffmpeg
+
+    # Step 3: Set up the specific Python version for this test run
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
-    # Step 3: Install Poetry for dependency management
+    # Step 4: Install Poetry for dependency management
     - name: Install Poetry
       uses: snok/install-poetry@v1
       with:
@@ -44,7 +50,7 @@ jobs:
         virtualenvs-create: true  # Create virtual environments
         virtualenvs-in-project: true  # Store venv in project directory
 
-    # Step 4: Cache Poetry dependencies to speed up workflow
+    # Step 5: Cache Poetry dependencies to speed up workflow
     - name: Load cached Poetry virtualenv
       id: cached-poetry-dependencies
       uses: actions/cache@v4
@@ -52,12 +58,12 @@ jobs:
         path: .venv  # Cache virtual environment
         key: venv-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
-    # Step 5: Install project dependencies
+    # Step 6: Install project dependencies
     - name: Install dependencies
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       run: poetry install --no-interaction --no-root
 
-    # Step 6: Code Quality Checks
+    # Step 7: Code Quality Checks
     # Linting to ensure code style consistency
     - name: Lint with flake8
       run: poetry run flake8 src
@@ -70,11 +76,11 @@ jobs:
     - name: Security scan with Bandit
       run: poetry run bandit -r src
 
-    # Step 7: Run unit tests (excluding release validation tests)
+    # Step 8: Run unit tests (excluding release validation tests)
     - name: Run unit tests
       run: poetry run pytest tests/ -v --ignore=tests/release_validation
 
-    # Step 8: Generate coverage report
+    # Step 9: Generate coverage report
     - name: Generate coverage report
       run: |
         poetry run pytest --cov=medialocate --cov-report=term --cov-report=xml
@@ -93,6 +99,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    # Install system dependencies
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y exiftool ffmpeg
 
     # Set up Python for release validation
     - name: Set up Python
@@ -119,6 +131,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    # Install system dependencies
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y exiftool ffmpeg
 
     # Set up Python for dependency checks
     - name: Set up Python

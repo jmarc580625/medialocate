@@ -27,7 +27,6 @@ from medialocate.media.parameters import (
 )
 from medialocate.web.media_server import (
     MediaServer,
-    MEDIASERVER_PORT,
     MEDIASERVER_UX,
     MEDIASERVER_SESSION_DIR,
 )
@@ -55,10 +54,16 @@ class TestMediaServer(unittest.TestCase):
         self.create_test_data(self.data_dir, "album1")
         self.create_test_data(self.data_dir, "album2")
 
+        # Use a random port for each test to avoid conflicts
+        import socket
+
+        sock = socket.socket()
+        sock.bind(("", 0))
+        self.port = sock.getsockname()[1]
+        sock.close()
+
         # Initialize the server
-        self.server = MediaServer(
-            port=MEDIASERVER_PORT, data_root_dir=self.data_dir, log=self.logger
-        )
+        self.server = MediaServer(self.port, self.data_dir, log=self.logger)
 
         # Start server in a separate thread
         self.server_thread = threading.Thread(target=self.server.start)
@@ -136,7 +141,7 @@ class TestMediaServer(unittest.TestCase):
 
     def test_server_startup(self):
         # Test that server starts up correctly
-        conn = HTTPConnection("localhost", MEDIASERVER_PORT)
+        conn = HTTPConnection("localhost", self.port)
         conn.request("GET", "/")
         response = conn.getresponse()
         self.assertEqual(response.status, 200)
@@ -144,7 +149,7 @@ class TestMediaServer(unittest.TestCase):
 
     def test_albums_endpoint(self):
         # Test the /api/albums endpoint
-        conn = HTTPConnection("localhost", MEDIASERVER_PORT)
+        conn = HTTPConnection("localhost", self.port)
         conn.request("GET", "/api/albums")
         response = conn.getresponse()
         self.assertEqual(response.status, 200)
@@ -155,7 +160,7 @@ class TestMediaServer(unittest.TestCase):
 
     def test_album_endpoint(self):
         # Test the /api/album endpoint for a specific album
-        conn = HTTPConnection("localhost", MEDIASERVER_PORT)
+        conn = HTTPConnection("localhost", self.port)
         conn.request("GET", "/api/album?album1")
         response = conn.getresponse()
         self.assertEqual(response.status, 200)
@@ -171,7 +176,7 @@ class TestMediaServer(unittest.TestCase):
             f.write(test_data)
 
         # Test the proxy endpoint for media files
-        conn = HTTPConnection("localhost", MEDIASERVER_PORT)
+        conn = HTTPConnection("localhost", self.port)
         conn.request("GET", f"/media/album1/test.txt")
         response = conn.getresponse()
         self.assertEqual(response.status, 200)
@@ -180,7 +185,7 @@ class TestMediaServer(unittest.TestCase):
 
     def test_nonexistent_album(self):
         # Test requesting a non-existent album
-        conn = HTTPConnection("localhost", MEDIASERVER_PORT)
+        conn = HTTPConnection("localhost", self.port)
         conn.request("GET", "/api/album?nonexistent")
         response = conn.getresponse()
         self.assertEqual(response.status, 404)
@@ -188,7 +193,7 @@ class TestMediaServer(unittest.TestCase):
 
     def test_invalid_media_path(self):
         # Test requesting an invalid proxy path
-        conn = HTTPConnection("localhost", MEDIASERVER_PORT)
+        conn = HTTPConnection("localhost", self.port)
         conn.request("GET", "/media/../invalid.jpg")
         response = conn.getresponse()
         self.assertEqual(response.status, 400)
@@ -199,7 +204,7 @@ class TestMediaServer(unittest.TestCase):
         import concurrent.futures
 
         def make_request():
-            conn = HTTPConnection("localhost", MEDIASERVER_PORT)
+            conn = HTTPConnection("localhost", self.port)
             try:
                 conn.request("GET", "/api/albums")
                 response = conn.getresponse()
@@ -233,7 +238,7 @@ class TestMediaServer(unittest.TestCase):
             (f'/api/album?{"x" * 1000}', 404),
         ]
 
-        conn = HTTPConnection("localhost", MEDIASERVER_PORT)
+        conn = HTTPConnection("localhost", self.port)
         for path, expected_status in test_cases:
             try:
                 conn.request("GET", path)
@@ -244,13 +249,13 @@ class TestMediaServer(unittest.TestCase):
                 response.read()  # Need to read the response to free the connection
             except Exception as e:
                 conn.close()
-                conn = HTTPConnection("localhost", MEDIASERVER_PORT)
+                conn = HTTPConnection("localhost", self.port)
                 raise e
         conn.close()
 
     def test_server_shutdown(self):
         # Test server shutdown endpoint
-        conn = HTTPConnection("localhost", MEDIASERVER_PORT)
+        conn = HTTPConnection("localhost", self.port)
         conn.request("GET", "/api/shutdown")
         response = conn.getresponse()
         self.assertEqual(response.status, 200)
@@ -262,7 +267,7 @@ class TestMediaServer(unittest.TestCase):
         time.sleep(1)  # Give server time to shut down
 
         # Try to make another request - should fail
-        conn = HTTPConnection("localhost", MEDIASERVER_PORT)
+        conn = HTTPConnection("localhost", self.port)
         with self.assertRaises(ConnectionRefusedError):
             conn.request("GET", "/")
             conn.getresponse()

@@ -8,10 +8,10 @@ This module provides utility functions for:
 
 import os
 import hashlib
-import pathlib
+from pathlib import Path
 
 
-def to_posix(filename: str) -> str:
+def to_posix(path: str) -> str:
     """Convert a file path to POSIX format.
 
     Args:
@@ -20,10 +20,13 @@ def to_posix(filename: str) -> str:
     Returns:
         str: POSIX-formatted file path
     """
-    return pathlib.PurePath(r"{}".format(filename)).as_posix()
+    path_obj = Path(path)
+    # Convertit le chemin en format POSIX
+    posix_path = path_obj.as_posix()
+    return posix_path
 
 
-def to_uri(filename: str) -> str:
+def to_uri(path: str) -> str:
     """Convert a file path to URI format.
 
     Special cases:
@@ -37,17 +40,17 @@ def to_uri(filename: str) -> str:
     Returns:
         str: URI-formatted file path
     """
-    if filename in ["", ".", "..", "c:", "C:"]:
+    if path in ["", ".", "..", "c:", "C:"]:
         return ""
-    if not os.path.isabs(filename):
-        uri = pathlib.Path(filename).resolve().as_uri()
-        uri = uri[len(pathlib.Path(".").resolve().as_uri()) + 1 :]
+    if not os.path.isabs(path):
+        uri = Path(path).resolve().as_uri()
+        uri = uri[len(Path(".").resolve().as_uri()) + 1 :]
     else:
-        uri = pathlib.Path(filename).resolve().as_uri()
+        uri = Path(path).resolve().as_uri()
     return uri
 
 
-def get_hash(filename: str) -> str:
+def get_hash(path: str) -> str:
     """Generate a SHA-256 hash of a file path.
 
     Args:
@@ -57,11 +60,11 @@ def get_hash(filename: str) -> str:
         str: Hexadecimal representation of the SHA-256 hash
     """
     return hashlib.md5(
-        to_posix(filename).encode("utf-8"), usedforsecurity=False
+        to_posix(path).encode("utf-8"), usedforsecurity=False
     ).hexdigest()
 
 
-def get_extension(filename: str) -> str:
+def get_extension(path: str) -> str:
     """Get the file extension from a file path.
 
     Args:
@@ -70,4 +73,4 @@ def get_extension(filename: str) -> str:
     Returns:
         str: File extension including the dot (e.g., '.txt')
     """
-    return pathlib.Path(filename).suffix[1:]
+    return Path(path).suffix[1:]
