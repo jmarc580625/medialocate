@@ -28,7 +28,7 @@ jobs:
 
     steps:
     # Step 1: Check out the repository
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
 
     # Step 2: Install system dependencies
     - name: Install system dependencies
@@ -38,13 +38,13 @@ jobs:
 
     # Step 3: Set up the specific Python version for this test run
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
     # Step 4: Install Poetry for dependency management
     - name: Install Poetry
-      uses: snok/install-poetry@v1
+      uses: snok/install-poetry@v2
       with:
         version: 1.7.1  # Pinned to specific version for consistency
         virtualenvs-create: true  # Create virtual environments
@@ -53,7 +53,7 @@ jobs:
     # Step 5: Cache Poetry dependencies to speed up workflow
     - name: Load cached Poetry virtualenv
       id: cached-poetry-dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v3
       with:
         path: .venv  # Cache virtual environment
         key: venv-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
@@ -98,7 +98,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
 
     # Install system dependencies
     - name: Install system dependencies
@@ -108,13 +108,13 @@ jobs:
 
     # Set up Python for release validation
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
         python-version: '3.12'  # Use latest Python version
 
     # Install Poetry
     - name: Install Poetry
-      uses: snok/install-poetry@v1
+      uses: snok/install-poetry@v2
 
     # Install all dependencies
     - name: Install dependencies
@@ -130,7 +130,7 @@ jobs:
     continue-on-error: true  # Make this job optional
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
 
     # Install system dependencies
     - name: Install system dependencies
@@ -140,13 +140,13 @@ jobs:
 
     # Set up Python for dependency checks
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
         python-version: '3.12'
 
     # Install Poetry
     - name: Install Poetry
-      uses: snok/install-poetry@v1
+      uses: snok/install-poetry@v2
 
     # Install project dependencies
     - name: Install dependencies
