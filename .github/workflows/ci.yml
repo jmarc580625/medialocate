@@ -1,7 +1,7 @@
 # Continuous Integration Workflow for MediaLocate
 # This workflow provides comprehensive testing and validation across multiple environments
 
-name: Continuous Integration
+name: CI/CD Pipeline
 
 # Trigger the workflow on push and pull request events
 # Covers main development branches to ensure code quality
@@ -12,7 +12,7 @@ on:
     branches: [ main ]  # PRs targeting main branch
 
 jobs:
-  setup:
+  build:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -29,7 +29,7 @@ jobs:
         shell: bash
 
   test:
-    needs: setup
+    needs: build
     strategy:
       fail-fast: false
       matrix:
@@ -46,16 +46,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
         os: ${{ matrix.os }}
 
-    # Code Quality Checks
-    - name: Lint with flake8
-      run: poetry run flake8 src
-
-    - name: Type check with mypy
-      run: poetry run mypy src
-
-    - name: Security scan with Bandit
-      run: poetry run bandit -r src
-
     # Run unit tests
     - name: Run unit tests
       run: poetry run pytest tests/ -v --ignore=tests/release_validation
@@ -71,8 +61,8 @@ jobs:
     #   env:
     #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-  release-validation:
-    needs: [setup, test]
+  quality:
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
@@ -82,24 +72,22 @@ jobs:
       with:
         python-version: "3.12"
         os: ubuntu-latest
+
+    # Code Quality Checks
+    - name: Lint with flake8
+      run: poetry run flake8 src
+
+    - name: Type check with mypy
+      run: poetry run mypy src
+
+    - name: Security scan with Bandit
+      run: poetry run bandit -r src
 
     - name: Run Release Validation Script
       run: poetry run python scripts/release_validation.py
 
-  dependency-security:
-    needs: setup
-    runs-on: ubuntu-latest
-    continue-on-error: true
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - uses: ./.github/actions/setup-poetry
-      with:
-        python-version: "3.12"
-        os: ubuntu-latest
-
     - name: Check dependencies for known security vulnerabilities
+      continue-on-error: true
       run: poetry run safety check
 
     # Dependency automation disabled for now - can be enabled later if needed
