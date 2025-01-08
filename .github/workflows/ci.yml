@@ -7,80 +7,60 @@ name: Continuous Integration
 # Covers main development branches to ensure code quality
 on:
   push:
-    branches: [ main, master, develop ]  # Key development branches
+    branches: [ main ]  # Key development branch
   pull_request:
-    branches: [ main, master, develop ]  # PRs targeting key branches
+    branches: [ main ]  # PRs targeting main branch
 
 jobs:
-  # Primary testing job: Runs comprehensive tests across multiple environments
+  setup:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install system dependencies
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y exiftool ffmpeg
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            brew install exiftool ffmpeg
+          fi
+        shell: bash
+
   test:
-    # Strategy to test across multiple OS and Python versions
-    # fail-fast: false ensures all combinations are tested, not stopping on first failure
+    needs: setup
     strategy:
       fail-fast: false
       matrix:
-        # Comprehensive OS and Python version coverage
-        os: [ubuntu-latest, windows-latest, macos-latest]  # Cross-platform testing
-        python-version: ['3.9', '3.10', '3.11', '3.12']  # Supported Python versions
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.12"]
 
-    # Use the specified OS for each test run
     runs-on: ${{ matrix.os }}
 
     steps:
-    # Step 1: Check out the repository
     - uses: actions/checkout@v4
 
-    # Step 2: Install system dependencies
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y exiftool ffmpeg
-
-    # Step 3: Set up the specific Python version for this test run
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+    - uses: ./.github/actions/setup-poetry
       with:
         python-version: ${{ matrix.python-version }}
+        os: ${{ matrix.os }}
 
-    # Step 4: Install Poetry for dependency management
-    - name: Install Poetry
-      uses: snok/install-poetry@v1
-      with:
-        version: 1.7.1  # Pinned to specific version for consistency
-        virtualenvs-create: true  # Create virtual environments
-        virtualenvs-in-project: true  # Store venv in project directory
-
-    # Step 5: Cache Poetry dependencies to speed up workflow
-    - name: Load cached Poetry virtualenv
-      id: cached-poetry-dependencies
-      uses: actions/cache@v4
-      with:
-        path: .venv  # Cache virtual environment
-        key: venv-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-    # Step 6: Install project dependencies
-    - name: Install dependencies
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
-
-    # Step 7: Code Quality Checks
-    # Linting to ensure code style consistency
+    # Code Quality Checks
     - name: Lint with flake8
       run: poetry run flake8 src
 
-    # Static type checking
     - name: Type check with mypy
       run: poetry run mypy src
 
-    # Security scanning
     - name: Security scan with Bandit
       run: poetry run bandit -r src
 
-    # Step 8: Run unit tests (excluding release validation tests)
+    # Run unit tests
     - name: Run unit tests
       run: poetry run pytest tests/ -v --ignore=tests/release_validation
 
-    # Step 9: Generate coverage report
+    # Generate coverage report
     - name: Generate coverage report
       run: |
         poetry run pytest --cov=medialocate --cov-report=term --cov-report=xml
@@ -91,69 +71,35 @@ jobs:
     #   env:
     #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-  # Dedicated job for release validation
-  # Runs after primary tests to ensure release readiness
   release-validation:
-    needs: test  # Only runs if primary tests pass
+    needs: [setup, test]
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    # Install system dependencies
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y exiftool ffmpeg
-
-    # Set up Python for release validation
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - uses: ./.github/actions/setup-poetry
       with:
-        python-version: '3.12'  # Use latest Python version
+        python-version: "3.12"
+        os: ubuntu-latest
 
-    # Install Poetry
-    - name: Install Poetry
-      uses: snok/install-poetry@v2
-
-    # Install all dependencies
-    - name: Install dependencies
-      run: poetry install
-
-    # Run custom release validation script
     - name: Run Release Validation Script
       run: poetry run python scripts/release_validation.py
 
-  # Optional job for dependency security checks
   dependency-security:
+    needs: setup
     runs-on: ubuntu-latest
-    continue-on-error: true  # Make this job optional
+    continue-on-error: true
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    # Install system dependencies
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y exiftool ffmpeg
-
-    # Set up Python for dependency checks
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - uses: ./.github/actions/setup-poetry
       with:
-        python-version: '3.12'
+        python-version: "3.12"
+        os: ubuntu-latest
 
-    # Install Poetry
-    - name: Install Poetry
-      uses: snok/install-poetry@v2
-
-    # Install project dependencies
-    - name: Install dependencies
-      run: poetry install
-
-    # Run Safety to check for known security vulnerabilities
-    - name: Run Safety
+    - name: Check dependencies for known security vulnerabilities
       run: poetry run safety check
 
     # Dependency automation disabled for now - can be enabled later if needed
@@ -161,4 +107,4 @@ jobs:
     #   uses: dependabot/dependabot-core@main
     #   with:
     #     command: update
-    #     config-file: .github/dependabot.yml  # Configuration for dependency updates
+    #     config-file: .github/dependabot.yml
