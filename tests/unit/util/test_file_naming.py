@@ -1,174 +1,223 @@
 import unittest
 import hashlib
-from medialocate.util.file_naming import to_posix, to_uri, get_hash, get_extension
+from medialocate.util.file_naming import (
+    relative_path_to_posix,
+    relative_path_to_uri,
+    get_hash_from_relative_path,
+    get_extension,
+)
 
 
 class TestFileNaming(unittest.TestCase):
     def setUp(self):
-        self.windows_path = "C:\\Users\\test\\file.txt"
-        self.posix_path = "/home/user/file.txt"
-        self.mixed_path = "C:/Users\\test/file.txt"
-        self.windows_relative_path = "C:Users\\test\\file.txt"
-        self.posix_relative_path = "home/user/file.txt"
+        self.windows_relative_path = "Users\\test\\file.txt"
+        self.posix_relative_path = "Users/test/file.txt"
+        self.mixed_relative_path = "Users\\test/file.txt"
+        self.expected_relative_path = self.posix_relative_path
+        self.expected_relative_uri = self.posix_relative_path
+        self.expected_relative_hash = hashlib.md5(
+            self.posix_relative_path.encode("utf-8"), usedforsecurity=False
+        ).hexdigest()
+        self.absolute_paths = [
+            "C:\\Users\\test\\file.txt",
+            "\\Users\\test\\file.txt",
+            "/users/test/file.txt",
+        ]
+        self.drive_letter_paths = [
+            "C:\\Users\\test\\file.txt",
+            "D:\\Users\\test\\file.txt",
+            "C:Users\\test\\file.txt",
+            "D:Users\\test\\file.txt",
+            "C:",
+            "C:.",
+            "C:..",
+            "C:\\",
+        ]
+        self.edge_case_paths = [
+            "",
+            ".",
+            "..",
+            "/",
+            "\\",
+        ]
+        self.special_char_paths = {
+            "path with spaces/file.txt": "path%20with%20spaces/file.txt",
+            "path_with_underscore/file.txt": "path_with_underscore/file.txt",
+            "path-with-dash/file.txt": "path-with-dash/file.txt",
+            "pathWithEqualSign=/file.txt": "pathWithEqualSign%3D/file.txt",
+            "pathWithAmpersandSign&/file.txt": "pathWithAmpersandSign%26/file.txt",
+            "pathWithArobaseSign@/file.txt": "pathWithArobaseSign%40/file.txt",
+            "pathWithEmojis🌍/file.txt": "pathWithEmojis%F0%9F%8C%8D/file.txt",
+            "pathWithKanjis🇯🇵/file.txt": "pathWithKanjis%F0%9F%87%AF%F0%9F%87%B5/file.txt",
+        }
         self.filename_no_ext = "testfile"
         self.filename_with_ext = "testfile.jpg"
         self.filename_multiple_dots = "test.file.jpg"
         self.filename_hidden = ".hidden"
 
-    def test_to_posix_windows_path(self):
+    def test_relative_path_to_posix_from_windows_relative_path(self):
+        # Test relative_path_to_posix with windows relative paths
         # Act
-        result = to_posix(self.windows_path)
+        result = relative_path_to_posix(self.windows_relative_path)
         # Assert
-        self.assertEqual(result, "C:/Users/test/file.txt")
+        self.assertEqual(result, self.posix_relative_path)
 
-    def test_to_posix_posix_path(self):
+    def test_relative_path_to_posix_from_posix_relative_path(self):
+        # Test relative_path_to_posix with posix relative paths
         # Act
-        result = to_posix(self.posix_path)
+        result = relative_path_to_posix(self.posix_relative_path)
         # Assert
-        self.assertEqual(result, self.posix_path)
+        self.assertEqual(result, self.posix_relative_path)
 
-    def test_to_posix_mixed_path(self):
+    def test_relative_path_to_posix_from_mixed_relative_path(self):
+        # Test relative_path_to_posix with mixed relative paths
         # Act
-        result = to_posix(self.mixed_path)
+        result = relative_path_to_posix(self.mixed_relative_path)
         # Assert
-        self.assertEqual(result, "C:/Users/test/file.txt")
+        self.assertEqual(result, self.posix_relative_path)
 
-    def test_get_extension_normal_file(self):
+    def test_relative_path_to_posix_with_absolute_path(self):
+        # Test relative_path_to_posix with absolute paths
+        for input_path in self.absolute_paths:
+            with self.subTest(input_path=input_path):
+                self.assertRaises(ValueError, relative_path_to_posix, input_path)
+
+    def test_relative_path_to_posix_with_drive_letter(self):
+        # Test relative_path_to_posix with drive letters
+        for input_path in self.drive_letter_paths:
+            with self.subTest(input_path=input_path):
+                self.assertRaises(ValueError, relative_path_to_posix, input_path)
+
+    def test_relative_path_to_posix_with_edge_cases(self):
+        # Test relative_path_to_posix with edge cases
+        for input_path in self.edge_case_paths:
+            with self.subTest(input_path=input_path):
+                self.assertRaises(ValueError, relative_path_to_posix, input_path)
+
+    def test_get_hash_from_relative_path_with_windows_relative_path(self):
+        # Test hash generation with Windows relative paths
+        # Act
+        result = get_hash_from_relative_path(self.windows_relative_path)
+        # Assert
+        self.assertEqual(result, self.expected_relative_hash)
+
+    def test_get_hash_from_relative_path_with_posix_relative_path(self):
+        # Test hash generation with POSIX relative paths
+        # Act
+        result = get_hash_from_relative_path(self.posix_relative_path)
+        # Assert
+        self.assertEqual(result, self.expected_relative_hash)
+
+    def test_get_hash_from_relative_path_with_mixed_relative_path(self):
+        # Test hash generation with mixed relative paths
+        # Act
+        result = get_hash_from_relative_path(self.mixed_relative_path)
+        # Assert
+        self.assertEqual(result, self.expected_relative_hash)
+
+    def test_get_hash_from_relative_path_with_special_chars(self):
+        # Test hash generation with special characters in relative paths
+        for path, expected in self.special_char_paths.items():
+            with self.subTest(path=path):
+                expected_hash = hashlib.md5(
+                    path.encode("utf-8"), usedforsecurity=False
+                ).hexdigest()
+                self.assertEqual(get_hash_from_relative_path(path), expected_hash)
+
+    def test_get_hash_from_relative_path_with_absolute_path(self):
+        # Test hash generation with absolute paths
+        for input_path in self.absolute_paths:
+            with self.subTest(input_path=input_path):
+                self.assertRaises(ValueError, get_hash_from_relative_path, input_path)
+
+    def test_get_hash_from_relative_path_with_drive_letter(self):
+        # Test hash generation with drive letters in paths
+        for input_path in self.drive_letter_paths:
+            with self.subTest(input_path=input_path):
+                self.assertRaises(ValueError, get_hash_from_relative_path, input_path)
+
+    def test_get_hash_from_relative_path_with_edge_cases(self):
+        # Test hash generation with edge cases
+        for input_path in self.edge_case_paths:
+            with self.subTest(input_path=input_path):
+                self.assertRaises(ValueError, get_hash_from_relative_path, input_path)
+
+    def test_relative_path_to_uri_with_windows_relative_path(self):
+        # Test URI conversion with Windows relative paths
+        # Act
+        result = relative_path_to_uri(self.windows_relative_path)
+        # Assert
+        self.assertEqual(result, self.expected_relative_uri)
+
+    def test_relative_path_to_uri_with_posix_relative_path(self):
+        # Test URI conversion with POSIX relative paths
+        # Act
+        result = relative_path_to_uri(self.posix_relative_path)
+        # Assert
+        self.assertEqual(result, self.expected_relative_uri)
+
+    def test_relative_path_to_uri_with_mixed_relative_path(self):
+        # Test URI conversion with mixed relative paths
+        # Act
+        result = relative_path_to_uri(self.mixed_relative_path)
+        # Assert
+        self.assertEqual(result, self.expected_relative_uri)
+
+    def test_relative_path_to_uri_with_absolute_path(self):
+        # Test URI conversion with Windows absolute paths
+        for path in self.absolute_paths:
+            with self.subTest(path=path):
+                self.assertRaises(ValueError, relative_path_to_uri, path)
+
+    def test_relative_path_to_uri_with_special_chars(self):
+        # Test URI conversion with special characters
+        for input_path, expected in self.special_char_paths.items():
+            with self.subTest(input_path=input_path):
+                self.assertEqual(relative_path_to_uri(input_path), expected)
+
+    def test_relative_path_to_uri_with_drive_letter_paths(self):
+        # Test URI conversion with Windows absolute paths
+        for path in self.drive_letter_paths:
+            with self.subTest(path=path):
+                self.assertRaises(ValueError, relative_path_to_uri, path)
+
+    def test_relative_path_to_uri_with_edge_cases(self):
+        # Test URI conversion with edge cases
+        for input_path in self.edge_case_paths:
+            with self.subTest(input_path=input_path):
+                self.assertRaises(ValueError, relative_path_to_uri, input_path)
+
+    def test_get_extension_with_normal_file(self):
+        # Test extension extraction with a normal file
         # Act
         result = get_extension(self.filename_with_ext)
         # Assert
         self.assertEqual(result, "jpg")
 
-    def test_get_extension_no_extension(self):
+    def test_get_extension_with_no_extension(self):
+        # Test extension extraction with no extension
         # Act
         result = get_extension(self.filename_no_ext)
         # Assert
         self.assertEqual(result, "")
 
-    def test_get_extension_multiple_dots(self):
+    def test_get_extension_with_multiple_dots(self):
+        # Test extension extraction with multiple dots in the filename
         # Act
         result = get_extension(self.filename_multiple_dots)
         # Assert
         self.assertEqual(result, "jpg")
 
-    def test_get_extension_hidden_file(self):
+    def test_get_extension_with_hidden_file(self):
+        # Test extension extraction with a hidden file
         # Act
         result = get_extension(self.filename_hidden)
         # Assert
         self.assertEqual(result, "")
 
-    def test_get_hash_windows_path(self):
-        # Arrange
-        expected_hash = hashlib.md5(
-            "C:/Users/test/file.txt".encode("utf-8"), usedforsecurity=False
-        ).hexdigest()
-        # Act
-        result = get_hash(self.windows_path)
-        # Assert
-        self.assertEqual(result, expected_hash)
-
-    def test_get_hash_posix_path(self):
-        # Arrange
-        expected_hash = hashlib.md5(
-            self.posix_path.encode("utf-8"), usedforsecurity=False
-        ).hexdigest()
-        # Act
-        result = get_hash(self.posix_path)
-        # Assert
-        self.assertEqual(result, expected_hash)
-
-    def test_get_hash_mixed_path(self):
-        # Arrange
-        expected_hash = hashlib.md5(
-            "C:/Users/test/file.txt".encode("utf-8"), usedforsecurity=False
-        ).hexdigest()
-        # Act
-        result = get_hash(self.mixed_path)
-        # Assert
-        self.assertEqual(result, expected_hash)
-
-    def test_to_uri_windows_absolute_path(self):
-        # Act
-        result = to_uri(self.windows_path)
-        # Assert
-        self.assertEqual(result, "file:///C:/Users/test/file.txt")
-
-    def test_to_uri_windows_relative_path(self):
-        # Act
-        result = to_uri(self.windows_relative_path)
-        # Assert
-        self.assertEqual(result, "Users/test/file.txt")
-
-    def test_to_uri_mixed_absolute_path(self):
-        # Act
-        result = to_uri(self.mixed_path)
-        # Assert
-        self.assertEqual(result, "file:///C:/Users/test/file.txt")
-
-    def test_to_uri_posix_absolute_path(self):
-        # Act
-        result = to_uri(self.posix_path)
-        # Assert
-        self.assertEqual(result, "file:///C:/home/user/file.txt")
-
-    def test_to_uri_posix_relative_path(self):
-        # Act
-        result = to_uri(self.posix_relative_path)
-        # Assert
-        self.assertEqual(result, "home/user/file.txt")
-
-    def test_to_posix_special_chars(self):
-        # Test paths with special characters
-        test_cases = {
-            "C:\\Test\\my file.txt": "C:/Test/my file.txt",
-            "C:\\Test\\path with spaces\\file.txt": "C:/Test/path with spaces/file.txt",
-            "C:\\Test\\path_with_underscore\\file.txt": "C:/Test/path_with_underscore/file.txt",
-            "C:\\Test\\path-with-dash\\file.txt": "C:/Test/path-with-dash/file.txt",
-        }
-        for input_path, expected in test_cases.items():
-            with self.subTest(input_path=input_path):
-                self.assertEqual(to_posix(input_path), expected)
-
-    def test_to_posix_edge_cases(self):
-        # Test edge cases for path conversion
-        test_cases = {
-            "": ".",
-            ".": ".",
-            "..": "..",
-            "/": "/",
-            "\\": "/",
-            "C:": "C:",
-            "C:\\": "C:/",
-        }
-        for input_path, expected in test_cases.items():
-            with self.subTest(input_path=input_path):
-                self.assertEqual(to_posix(input_path), expected)
-
-    def test_to_uri_special_chars(self):
-        # Test URI conversion with special characters
-        special_paths = {
-            "C:\\Test\\test user\\f.txt": "file:///C:/Test/test%20user/f.txt",
-            "C:\\Test\\my docs\\f.txt": "file:///C:/Test/my%20docs/f.txt",
-            "C:\\Test\\My App\\f.txt": "file:///C:/Test/My%20App/f.txt",
-        }
-        for input_path, expected in special_paths.items():
-            with self.subTest(input_path=input_path):
-                self.assertEqual(to_uri(input_path), expected)
-
-    def test_to_uri_edge_cases(self):
-        # Test edge cases for URI conversion
-        test_cases = {
-            "C:\\": "file:///C:/",
-            "C:": "",
-            ".": "",
-            "..": "",
-        }
-        for input_path, expected in test_cases.items():
-            with self.subTest(input_path=input_path):
-                self.assertEqual(to_uri(input_path), expected)
-
-    def test_get_extension_edge_cases(self):
-        # Test edge cases for extension extraction
+    def test_get_extension_with_edge_cases(self):
+        # Test extension extraction with edge cases
+        # Prepare
         test_cases = {
             "": "",
             ".": "",
@@ -183,32 +232,6 @@ class TestFileNaming(unittest.TestCase):
         for input_path, expected in test_cases.items():
             with self.subTest(input_path=input_path):
                 self.assertEqual(get_extension(input_path), expected)
-
-    def test_get_hash_special_chars(self):
-        # Test hash generation with special characters
-        test_cases = [
-            "C:\\Users\\test user\\file.txt",
-            "C:\\Program Files\\My App\\file.txt",
-            "path with spaces/file.txt",
-            "path_with_underscore/file.txt",
-            "path-with-dash/file.txt",
-        ]
-        for path in test_cases:
-            with self.subTest(path=path):
-                expected_hash = hashlib.md5(
-                    to_posix(path).encode("utf-8"), usedforsecurity=False
-                ).hexdigest()
-                self.assertEqual(get_hash(path), expected_hash)
-
-    def test_get_hash_edge_cases(self):
-        # Test edge cases for hash generation
-        test_cases = ["", ".", "..", "/", "\\"]
-        for path in test_cases:
-            with self.subTest(path=path):
-                expected_hash = hashlib.md5(
-                    to_posix(path).encode("utf-8"), usedforsecurity=False
-                ).hexdigest()
-                self.assertEqual(get_hash(path), expected_hash)
 
 
 if __name__ == "__main__":

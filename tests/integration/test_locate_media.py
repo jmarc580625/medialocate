@@ -19,7 +19,7 @@ from medialocate.locate_media import main
 from medialocate.media.parameters import MEDIALOCATION_DIR, MEDIALOCATION_STORE_NAME
 from medialocate.location.gps import GPS
 from medialocate.media.locator import MediaLocateAction, MediaType
-from medialocate.util.file_naming import get_hash
+from medialocate.util.file_naming import get_hash_from_relative_path
 
 
 @dataclass
@@ -123,7 +123,7 @@ class TestLocateMediaCommand(unittest.TestCase):
 
         # Verify thumbnails were created/not created as expected
         for test_file in self.test_files:
-            thumb_name = f"{get_hash(test_file.filename)}.jpg"
+            thumb_name = f"{get_hash_from_relative_path(test_file.filename)}.jpg"
             thumb_path = os.path.join(media_output_dir, thumb_name)
             if test_file.filename == "photo1.jpg" or test_file.filename == "video1.mp4":
                 self.assertTrue(
@@ -169,7 +169,7 @@ class TestLocateMediaCommand(unittest.TestCase):
         media_output_dir = os.path.join(self.media_dir, MEDIALOCATION_DIR)
         for test_file in self.test_files:
             if test_file.filename == "photo1.jpg" or test_file.filename == "video1.mp4":
-                thumb_name = f"{get_hash(test_file.filename)}.jpg"
+                thumb_name = f"{get_hash_from_relative_path(test_file.filename)}.jpg"
                 thumb_path = os.path.join(media_output_dir, thumb_name)
                 self.assertTrue(os.path.exists(thumb_path))
 
@@ -194,13 +194,13 @@ class TestLocateMediaCommand(unittest.TestCase):
 
         # Verify only top-level files were processed
         media_output_dir = os.path.join(self.media_dir, MEDIALOCATION_DIR)
-        ignored_thumb = f"{get_hash('subdir/ignored.jpg')}.jpg"
+        ignored_thumb = f"{get_hash_from_relative_path('subdir/ignored.jpg')}.jpg"
         self.assertFalse(os.path.exists(os.path.join(media_output_dir, ignored_thumb)))
 
         # Verify main directory files were processed
         for test_file in self.test_files:
             if test_file.filename == "photo1.jpg" or test_file.filename == "video1.mp4":
-                thumb_name = f"{get_hash(test_file.filename)}.jpg"
+                thumb_name = f"{get_hash_from_relative_path(test_file.filename)}.jpg"
                 thumb_path = os.path.join(media_output_dir, thumb_name)
                 self.assertTrue(os.path.exists(thumb_path))
 

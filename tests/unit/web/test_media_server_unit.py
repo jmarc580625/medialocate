@@ -15,7 +15,7 @@ import tempfile
 from urllib.parse import urlparse
 from urllib.error import URLError
 from unittest.mock import MagicMock, patch
-from medialocate.util.file_naming import to_posix
+from medialocate.util.file_naming import relative_path_to_posix
 from medialocate.web.media_server import (
     MediaServer,
     ServiceHandler,
@@ -57,10 +57,12 @@ class TestMediaServer(unittest.TestCase):
         from the filesystem.
         """
         # Create test media files
-        test_dir = os.path.join(self.test_dir, "album1")
-        os.makedirs(test_dir)
-        test_file = os.path.join(test_dir, MEDIALOCATION_STORE_NAME)
-        with open(test_file, "w") as f:
+        album_dir = os.path.join(self.test_dir, "album1")
+        os.makedirs(album_dir)
+        album_data_dir = os.path.join(album_dir, ".data")
+        os.makedirs(album_data_dir)
+        test_data_file = os.path.join(album_data_dir, MEDIALOCATION_STORE_NAME)
+        with open(test_data_file, "w") as f:
             json.dump({"location": {"latitude": 48.8584, "longitude": 2.2945}}, f)
 
         # Get media sources and save them
@@ -71,8 +73,8 @@ class TestMediaServer(unittest.TestCase):
 
         # Verify the path is correct
         album_path = next(iter(self.media_server.items_dict.values()))
-        expected_path = os.path.join("album1", MEDIALOCATION_STORE_NAME)
-        self.assertEqual(album_path, to_posix(expected_path))
+        expected_path = os.path.join(".data", MEDIALOCATION_STORE_NAME)
+        self.assertEqual(album_path, relative_path_to_posix(expected_path))
 
     def test_save_and_retrieve_media_sources(self):
         """Test saving and retrieving media sources from cache"""

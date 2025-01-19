@@ -8,7 +8,10 @@ import time
 from enum import Enum
 from typing import Iterator, ClassVar, Dict, Any, List, Optional
 from medialocate.store.dict import DictStore
-from medialocate.util.file_naming import get_hash, to_posix
+from medialocate.util.file_naming import (
+    get_hash_from_relative_path,
+    relative_path_to_posix,
+)
 
 
 class ProcessingStatus:
@@ -66,7 +69,7 @@ class ProcessingStatus:
         """
         self.store = store
         self.key = key
-        self.filename = to_posix(filename)
+        self.filename = relative_path_to_posix(filename)
         self.state = state
         self.time = time_val if time_val is not None else time.time()
         self._isNew = True
@@ -77,7 +80,7 @@ class ProcessingStatus:
     @classmethod
     def filename_hash(cls, filename: str) -> str:
         """Compute the hash of a file name."""
-        return get_hash(filename)
+        return get_hash_from_relative_path(filename)
 
     @classmethod
     def getFromStore(

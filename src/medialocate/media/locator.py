@@ -22,7 +22,7 @@ from medialocate.media.parameters import (
 )
 from medialocate.store.dict import DictStore
 from medialocate.location.gps import GPS
-from medialocate.util.file_naming import to_uri
+from medialocate.util.file_naming import relative_path_to_uri
 
 
 class MediaType(Enum):
@@ -207,6 +207,10 @@ class MediaLocateAction:
         self.store.close()
         if self.exiftool is not None:
             self.exiftool.terminate()
+
+    def terminate(self) -> None:
+        """Terminate the action."""
+        self.__exit__()
 
     def get_gps_data(self, file_to_process: str) -> GPS:
         """Extract GPS coordinates from media file's EXIF data.
@@ -517,8 +521,8 @@ class MediaLocateAction:
             ):
                 data_tag = DataTag()
 
-                data_tag.mediasource = to_uri(file_to_process)
-                data_tag.mediathumbnail = to_uri(thumb_filename)
+                data_tag.mediasource = relative_path_to_uri(file_to_process)
+                data_tag.mediathumbnail = relative_path_to_uri(thumb_filename)
 
                 data_tag.mediaformat = media_format
                 data_tag.mediatype = media_type

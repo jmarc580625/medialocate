@@ -17,8 +17,8 @@ from http.client import HTTPConnection
 from urllib.parse import urlencode
 from unittest.mock import patch, MagicMock
 from medialocate.util.file_naming import (
-    to_posix,
-    get_hash,
+    relative_path_to_posix,
+    get_hash_from_relative_path,
 )
 from medialocate.media.parameters import (
     MEDIALOCATION_DIR,
@@ -122,15 +122,15 @@ class TestMediaServer(unittest.TestCase):
 
         media_location = {}
         for media_file, location in location_data.items():
-            hash = get_hash(media_file)
+            hash = get_hash_from_relative_path(media_file)
             thumbnail_name = hash + ".jpg"
             thumbnail_path = os.path.join(MEDIALOCATION_DIR, thumbnail_name)
             thumbnail_fullpath = os.path.join(album_dir, thumbnail_path)
             with open(thumbnail_fullpath, "w") as f:
                 f.write(f"<html><body>{media_file} thumbnail</body></html>")
             media_desc = {
-                "media": to_posix(media_file),
-                "thumbnail": to_posix(thumbnail_path),
+                "media": relative_path_to_posix(media_file),
+                "thumbnail": relative_path_to_posix(thumbnail_path),
                 **location,
             }
             media_location[hash] = media_desc

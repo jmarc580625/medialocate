@@ -83,11 +83,10 @@ def main():
 
     log.debug(f"directories={directories}")
 
-    input_name = MEDIALOCATION_STORE_NAME
     for directory in directories:
         working_directory = os.path.join(directory, MEDIALOCATION_DIR)
+        input_file_name = os.path.join(working_directory, MEDIALOCATION_STORE_NAME)
         output_file_name = os.path.join(working_directory, MEDIAGROUPS_STORE_NAME)
-        input_file_name = os.path.join(working_directory, input_name)
 
         if not os.path.exists(working_directory):
             log.info(f"{directory} does not exist, ignored")
@@ -108,7 +107,7 @@ def main():
             log.info(f"{directory} is up-to-date, ignored")
             continue
 
-        with DictStore(working_directory, input_name) as input_store:
+        with DictStore(working_directory, MEDIALOCATION_STORE_NAME) as input_store:
             locations = input_store.dict()
             media_groups = MediaGroups(grouping_threshold, [])
             media_groups.add_locations(locations)

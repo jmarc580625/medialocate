@@ -26,7 +26,10 @@ from typing import Dict, Optional, Tuple
 from pathlib import Path
 from urllib.parse import urlparse
 from http.server import SimpleHTTPRequestHandler
-from medialocate.util.file_naming import get_hash, to_posix
+from medialocate.util.file_naming import (
+    get_hash_from_native_path,
+    relative_path_to_posix,
+)
 from medialocate.util.url_validator import validate_query
 from medialocate.finder.file import FileFinder
 from medialocate.media.parameters import MEDIALOCATION_STORE_NAME
@@ -410,7 +413,7 @@ class MediaServer:
         abs_path_to_data_root_dir = os.path.abspath(data_root_dir)
         self.data_root_dir = os.path.normpath(abs_path_to_data_root_dir)
         self.session_cache = os.path.join(
-            self.cache_dir, f"{get_hash(self.data_root_dir)}.json"
+            self.cache_dir, f"{get_hash_from_native_path(self.data_root_dir)}.json"
         )
         self.items_dict: Dict[str, str] = {}
         self.httpd: Optional[socketserver.TCPServer] = None
@@ -437,7 +440,7 @@ class MediaServer:
             # key = os.sep.join(path_items[path_to_data_length : len(path_items) - 2])
             value = os.sep.join(path_items[-2:])
             key = os.sep.join(path_items[path_to_data_length:-2])
-            items_dict[to_posix(key)] = to_posix(value)
+            items_dict[relative_path_to_posix(key)] = relative_path_to_posix(value)
 
         return items_dict
 

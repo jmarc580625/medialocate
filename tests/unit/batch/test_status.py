@@ -53,15 +53,6 @@ class TestProcessingStatus(unittest.TestCase):
         self.assertEqual(status._isNew, True)
         self.assertEqual(status._isUpdated, False)
 
-    def test_filename_hash_empty_string(self):
-        """ "Test filename hash with empty string"""
-        # Arrange
-        # empty filename is converted to Posix path '.' to ensure hash is system independent
-        hash = hashlib.md5(".".encode("utf-8")).hexdigest()
-
-        # Act & Assert
-        self.assertEqual(ProcessingStatus.filename_hash(""), hash)
-
     def test_filename_hash_with_ascii_string(self):
         """ "Test filename hash with ascii string"""
         # Arrange

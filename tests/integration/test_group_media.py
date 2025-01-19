@@ -9,6 +9,7 @@ Tests the integration between:
 """
 
 import os
+import time
 import shutil
 import tempfile
 import unittest
@@ -97,14 +98,17 @@ class TestGroupMediaCommand(unittest.TestCase):
             f.write(
                 '{"media1.jpg": {"gps":{"latitude": 48.8584, "longitude": 2.2945}}}'
             )
-        ls_initial_mtime = os.path.getmtime(self.location_store)
+        location_store_initial_mtime = os.path.getmtime(self.location_store)
+
+        # Wait to ensure different timestamps
+        time.sleep(0.1)
 
         # Create existing groups data
         with open(self.groups_store, "w") as f:
             f.write('{"group1": ["media1.jpg"]}')
 
         # Store the initial modification time
-        initial_mtime = os.path.getmtime(self.groups_store)
+        group_store_initial_mtime = os.path.getmtime(self.groups_store)
 
         # Act
         with patch("os.getcwd") as mock_getcwd:
@@ -118,7 +122,9 @@ class TestGroupMediaCommand(unittest.TestCase):
         # Verify the file was actually regenerated
         final_mtime = os.path.getmtime(self.groups_store)
         self.assertEqual(
-            final_mtime, initial_mtime, "Groups file should not have been regenerated"
+            final_mtime,
+            group_store_initial_mtime,
+            "Groups file should not have been regenerated",
         )
 
     def test_group_media_with_force_flag(self):

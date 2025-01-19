@@ -56,9 +56,16 @@ class TestDataTag(unittest.TestCase):
 class TestMediaLocateAction(unittest.TestCase):
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
-        self.out_file = os.path.join(self.temp_dir, "out.html")
-        self.test_files_dir = os.path.join(self.temp_dir, "test_files")
-        os.makedirs(self.test_files_dir, exist_ok=True)
+        self.cwd = os.getcwd()
+        os.chdir(self.temp_dir)
+
+        self.out_filename = "out.html"
+
+        self.test_working_dirname = ".test_working"
+        os.makedirs(self.test_working_dirname, exist_ok=True)
+
+        self.test_files_dirname = "test_files"
+        os.makedirs(self.test_files_dirname, exist_ok=True)
 
         # Create test files
         self.test_files = {
@@ -67,11 +74,13 @@ class TestMediaLocateAction(unittest.TestCase):
             "unknown.txt": MediaType.UNKNOWN,
         }
         for filename in self.test_files:
-            Path(os.path.join(self.test_files_dir, filename)).touch()
+            Path(os.path.join(self.test_files_dirname, filename)).touch()
 
-        self.action = MediaLocateAction(self.temp_dir, self.out_file)
+        self.action = MediaLocateAction(self.test_working_dirname, self.out_filename)
 
     def tearDown(self):
+        self.action.terminate()
+        os.chdir(self.cwd)
         shutil.rmtree(self.temp_dir)
 
     def test_get_media_type(self):
@@ -103,7 +112,7 @@ class TestMediaLocateAction(unittest.TestCase):
         ]
         mock_exiftool_class.return_value = mock_exiftool_instance
 
-        test_file = os.path.join(self.test_files_dir, "picture.jpg")
+        test_file = os.path.join(self.test_files_dirname, "picture.jpg")
         gps = self.action.get_gps_data(test_file)
 
         self.assertIsNotNone(gps)
@@ -122,7 +131,7 @@ class TestMediaLocateAction(unittest.TestCase):
         mock_exiftool_instance.get_tags.return_value = [{"file": "test.jpg"}]
         mock_exiftool_class.return_value = mock_exiftool_instance
 
-        test_file = os.path.join(self.test_files_dir, "picture.jpg")
+        test_file = os.path.join(self.test_files_dirname, "picture.jpg")
         with self.assertRaises(MediaLocateAction.GPSExtractionError):
             _ = self.action.get_gps_data(test_file)
 
@@ -156,8 +165,8 @@ class TestMediaLocateAction(unittest.TestCase):
     def test_generate_thumbnail_picture(self, mock_run):
         mock_run.return_value = Mock(returncode=0)
 
-        source = os.path.join(self.test_files_dir, "picture.jpg")
-        thumb = os.path.join(self.temp_dir, "thumb.jpg")
+        source = os.path.join(self.test_files_dirname, "picture.jpg")
+        thumb = os.path.join(self.test_working_dirname, "thumb.jpg")
 
         self.action.generate_thumbnail(source, thumb)
         mock_run.assert_called_once()
@@ -166,14 +175,14 @@ class TestMediaLocateAction(unittest.TestCase):
     def test_generate_thumbnail_movie(self, mock_run):
         mock_run.return_value = Mock(returncode=0)
 
-        source = os.path.join(self.test_files_dir, "movie.mp4")
-        thumb = os.path.join(self.temp_dir, "thumb.jpg")
+        source = os.path.join(self.test_files_dirname, "movie.mp4")
+        thumb = os.path.join(self.test_working_dirname, "thumb.jpg")
 
         self.action.generate_thumbnail(source, thumb)
         mock_run.assert_called_once()
 
     def test_process_valid_file(self):
-        test_file = os.path.join(self.test_files_dir, "picture.jpg")
+        test_file = os.path.join(self.test_files_dirname, "picture.jpg")
         with patch.object(self.action, "generate_thumbnail") as mock_thumb:
             with patch.object(self.action, "get_gps_data") as mock_gps:
                 mock_gps.return_value = GPS(45.5, -122.6)
@@ -181,9 +190,12 @@ class TestMediaLocateAction(unittest.TestCase):
                 mock_thumb.assert_called_once()
 
     def test_process_invalid_file(self):
-        test_file = os.path.join(self.test_files_dir, "unknown.txt")
+        test_file = "unknown.txt"
         result = self.action.process(test_file, "test_hash")
         self.assertEqual(result, 1)
+        # Clean up potential subprocess
+        if hasattr(self.action, "_process"):
+            self.action._process.terminate()
 
 
 if __name__ == "__main__":

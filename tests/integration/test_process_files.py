@@ -12,7 +12,7 @@ from typing import List, Dict, Optional
 from medialocate.process_files import main
 from medialocate.batch.status import ProcessingStatus
 from medialocate.store.dict import DictStore
-from medialocate.util.file_naming import to_posix
+from medialocate.util.file_naming import relative_path_to_posix
 
 
 class TestProcessFiles(unittest.TestCase):
@@ -92,7 +92,7 @@ class TestProcessFiles(unittest.TestCase):
         filename1 = "file1.txt"
         dirname1 = "dir1"
         path1 = os.path.join(dirname1, filename1)
-        path1_posix = to_posix(path1)
+        path1_posix = relative_path_to_posix(path1)
         filename2 = "file2.txt"
 
         self.create_test_file(path1, "test1")
