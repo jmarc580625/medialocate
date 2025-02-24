@@ -80,19 +80,31 @@ class TestFileNaming(unittest.TestCase):
         # Test relative_path_to_posix with absolute paths
         for input_path in self.absolute_paths:
             with self.subTest(input_path=input_path):
-                self.assertRaises(ValueError, relative_path_to_posix, input_path)
+                with self.assertRaises(
+                    ValueError,
+                    msg=f"relative_path_to_posix({input_path}) should raise ValueError",
+                ):
+                    relative_path_to_posix(input_path)
 
     def test_relative_path_to_posix_with_drive_letter(self):
         # Test relative_path_to_posix with drive letters
         for input_path in self.drive_letter_paths:
             with self.subTest(input_path=input_path):
-                self.assertRaises(ValueError, relative_path_to_posix, input_path)
+                with self.assertRaises(
+                    ValueError,
+                    msg=f"relative_path_to_posix({input_path}) should raise ValueError",
+                ):
+                    relative_path_to_posix(input_path)
 
     def test_relative_path_to_posix_with_edge_cases(self):
         # Test relative_path_to_posix with edge cases
         for input_path in self.edge_case_paths:
             with self.subTest(input_path=input_path):
-                self.assertRaises(ValueError, relative_path_to_posix, input_path)
+                with self.assertRaises(
+                    ValueError,
+                    msg=f"relative_path_to_posix({input_path}) should raise ValueError",
+                ):
+                    relative_path_to_posix(input_path)
 
     def test_get_hash_from_relative_path_with_windows_relative_path(self):
         # Test hash generation with Windows relative paths
@@ -128,19 +140,31 @@ class TestFileNaming(unittest.TestCase):
         # Test hash generation with absolute paths
         for input_path in self.absolute_paths:
             with self.subTest(input_path=input_path):
-                self.assertRaises(ValueError, get_hash_from_relative_path, input_path)
+                with self.assertRaises(
+                    ValueError,
+                    msg=f"get_hash_from_relative_path({input_path}) should raise ValueError",
+                ):
+                    get_hash_from_relative_path(input_path)
 
     def test_get_hash_from_relative_path_with_drive_letter(self):
         # Test hash generation with drive letters in paths
         for input_path in self.drive_letter_paths:
             with self.subTest(input_path=input_path):
-                self.assertRaises(ValueError, get_hash_from_relative_path, input_path)
+                with self.assertRaises(
+                    ValueError,
+                    msg=f"get_hash_from_relative_path({input_path}) should raise ValueError",
+                ):
+                    get_hash_from_relative_path(input_path)
 
     def test_get_hash_from_relative_path_with_edge_cases(self):
         # Test hash generation with edge cases
         for input_path in self.edge_case_paths:
             with self.subTest(input_path=input_path):
-                self.assertRaises(ValueError, get_hash_from_relative_path, input_path)
+                with self.assertRaises(
+                    ValueError,
+                    msg=f"get_hash_from_relative_path({input_path}) should raise ValueError",
+                ):
+                    get_hash_from_relative_path(input_path)
 
     def test_relative_path_to_uri_with_windows_relative_path(self):
         # Test URI conversion with Windows relative paths
@@ -167,7 +191,11 @@ class TestFileNaming(unittest.TestCase):
         # Test URI conversion with Windows absolute paths
         for path in self.absolute_paths:
             with self.subTest(path=path):
-                self.assertRaises(ValueError, relative_path_to_uri, path)
+                with self.assertRaises(
+                    ValueError,
+                    msg=f"relative_path_to_uri({path}) should raise ValueError",
+                ):
+                    relative_path_to_uri(path)
 
     def test_relative_path_to_uri_with_special_chars(self):
         # Test URI conversion with special characters
@@ -179,13 +207,21 @@ class TestFileNaming(unittest.TestCase):
         # Test URI conversion with Windows absolute paths
         for path in self.drive_letter_paths:
             with self.subTest(path=path):
-                self.assertRaises(ValueError, relative_path_to_uri, path)
+                with self.assertRaises(
+                    ValueError,
+                    msg=f"relative_path_to_uri({path}) should raise ValueError",
+                ):
+                    relative_path_to_uri(path)
 
     def test_relative_path_to_uri_with_edge_cases(self):
         # Test URI conversion with edge cases
         for input_path in self.edge_case_paths:
             with self.subTest(input_path=input_path):
-                self.assertRaises(ValueError, relative_path_to_uri, input_path)
+                with self.assertRaises(
+                    ValueError,
+                    msg=f"relative_path_to_uri({input_path}) should raise ValueError",
+                ):
+                    relative_path_to_uri(input_path)
 
     def test_get_extension_with_normal_file(self):
         # Test extension extraction with a normal file

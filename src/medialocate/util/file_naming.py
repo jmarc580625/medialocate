@@ -22,12 +22,15 @@ def relative_path_to_posix(path: str) -> str:
 
     Returns:
         str: POSIX-formatted file path with forward slashes
-    """
-    if os.path.isabs(path):
-        raise ValueError("Path must be relative")
 
-    if path in ["", ".", ".."]:
+    Raises:
+        ValueError: If path is absolute, empty, or a special path
+    """
+    if path in ["", ".", "..", "/", "\\"]:
         raise ValueError("Path must contain filename")
+
+    if os.path.isabs(path) or path.startswith("/") or path.startswith("\\"):
+        raise ValueError("Path must be relative")
 
     drive, path = os.path.splitdrive(path)
     if drive:
