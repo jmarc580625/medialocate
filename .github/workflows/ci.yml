@@ -94,7 +94,15 @@ jobs:
 
     # Code Quality Checks
     - name: Lint with flake8
-      run: poetry run flake8 src
+      shell: bash
+      run: |
+        echo "Debug: Current PATH=$PATH"
+        echo "Debug: Poetry location:"
+        which poetry || echo "Poetry not found"
+        echo "Debug: Poetry version:"
+        poetry --version || echo "Poetry not found"
+        echo "Debug: Running flake8..."
+        poetry run flake8 src
 
     - name: Type check with mypy
       run: poetry run mypy src
