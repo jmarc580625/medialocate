@@ -32,6 +32,8 @@ jobs:
             sudo apt-get install -y exiftool ffmpeg
           elif [ "$RUNNER_OS" == "macOS" ]; then
             brew install exiftool ffmpeg
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+            choco install ffmpeg-full exiftool -y
           fi
         shell: bash
 
