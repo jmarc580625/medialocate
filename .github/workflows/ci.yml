@@ -105,10 +105,17 @@ jobs:
         poetry show
         echo "Debug: Virtual env location:"
         poetry env info
+        echo "Debug: Flake8 executable location:"
+        poetry run which flake8 || echo "flake8 not in PATH"
+        echo "Debug: Flake8 version:"
+        poetry run flake8 --version || echo "flake8 version failed"
+        echo "Debug: Python executable being used:"
+        poetry run which python
         echo "Debug: Running flake8..."
         poetry run flake8 src || {
           echo "Debug: flake8 failed with exit code $?"
-          poetry run which flake8 || echo "flake8 not in PATH"
+          echo "Debug: Directory contents of src:"
+          ls -la src/
         }
 
     - name: Type check with mypy
