@@ -101,8 +101,15 @@ jobs:
         which poetry || echo "Poetry not found"
         echo "Debug: Poetry version:"
         poetry --version || echo "Poetry not found"
+        echo "Debug: List installed packages:"
+        poetry show
+        echo "Debug: Virtual env location:"
+        poetry env info
         echo "Debug: Running flake8..."
-        poetry run flake8 src
+        poetry run flake8 src || {
+          echo "Debug: flake8 failed with exit code $?"
+          poetry run which flake8 || echo "flake8 not in PATH"
+        }
 
     - name: Type check with mypy
       run: poetry run mypy src
