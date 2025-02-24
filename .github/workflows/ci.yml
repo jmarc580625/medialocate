@@ -49,6 +49,9 @@ jobs:
         python-version: ["3.12"]
 
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
 
     steps:
     - uses: actions/checkout@v4
@@ -83,6 +86,9 @@ jobs:
           # macos-latest
         ]
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
 
     steps:
     - uses: actions/checkout@v4
@@ -94,31 +100,7 @@ jobs:
 
     # Code Quality Checks
     - name: Lint with flake8
-      shell: bash
-      run: |
-        echo "Debug: Current PATH=$PATH"
-        echo "Debug: Poetry location:"
-        which poetry || echo "Poetry not found"
-        echo "Debug: Poetry version:"
-        poetry --version || echo "Poetry not found"
-        echo "Debug: List installed packages:"
-        poetry show
-        echo "Debug: Virtual env location:"
-        poetry env info
-        echo "Debug: Flake8 executable location:"
-        poetry run which flake8 || echo "flake8 not in PATH"
-        echo "Debug: Flake8 version:"
-        poetry run flake8 --version || echo "flake8 version failed"
-        echo "Debug: Python executable being used:"
-        poetry run which python
-        echo "Debug: Checking src directory:"
-        ls -la src/
-        echo "Debug: Running flake8..."
-        poetry run flake8 --verbose src || {
-          echo "Debug: flake8 failed with exit code $?"
-          echo "Debug: Directory contents of src:"
-          ls -la src/
-        }
+      run: poetry run flake8 src
 
     - name: Type check with mypy
       run: poetry run mypy src
