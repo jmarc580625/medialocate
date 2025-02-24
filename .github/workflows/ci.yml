@@ -64,8 +64,7 @@ jobs:
 
     # Generate coverage report
     - name: Generate coverage report
-      run: |
-        poetry run pytest --cov=medialocate --cov-report=term --cov-report=xml
+      run: poetry run pytest --cov=medialocate --cov-report=term --cov-report=xml
 
     # Codecov integration to be added later when token is configured
     # - name: Upload coverage to Codecov
