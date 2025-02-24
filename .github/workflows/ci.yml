@@ -111,8 +111,10 @@ jobs:
         poetry run flake8 --version || echo "flake8 version failed"
         echo "Debug: Python executable being used:"
         poetry run which python
+        echo "Debug: Checking src directory:"
+        ls -la src/
         echo "Debug: Running flake8..."
-        poetry run flake8 src || {
+        poetry run flake8 --verbose src || {
           echo "Debug: flake8 failed with exit code $?"
           echo "Debug: Directory contents of src:"
           ls -la src/
