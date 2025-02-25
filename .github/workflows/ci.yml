@@ -74,6 +74,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
         os: ${{ matrix.os }}
 
+    - name: Setup environment
+      run: |
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          echo "C:\\ProgramData\\chocolatey\\bin" >> $env:GITHUB_PATH
+        fi
+
     - name: Check dependencies
       run: |
         ffmpeg -version
