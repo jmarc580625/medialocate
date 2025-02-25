@@ -78,6 +78,8 @@ jobs:
       run: |
         if [ "$RUNNER_OS" == "Windows" ]; then
           echo "C:\\ProgramData\\chocolatey\\bin" >> $env:GITHUB_PATH
+          echo "PATH=$PATH"
+          ls C:\\ProgramData\\chocolatey\\bin
         fi
 
     - name: Check dependencies
