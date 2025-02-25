@@ -37,11 +37,14 @@ jobs:
             echo "C:\\ProgramData\\chocolatey\\bin" >> $env:GITHUB_PATH
             # Install ffmpeg and exiftool
             choco install ffmpeg-full exiftool -y
-            # Verify installation
-            ffmpeg -version
-            exiftool -ver
           fi
         shell: bash
+
+      - name: Verify installations
+        run: |
+          ffmpeg -version
+          exiftool -ver
+
 
   test:
     needs: build
