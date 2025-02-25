@@ -34,6 +34,24 @@ jobs:
             brew install exiftool ffmpeg
           elif [ "$RUNNER_OS" == "Windows" ]; then
             choco install ffmpeg-full exiftool -y
+            echo "Verifying installations..."
+            echo "Checking installation directories:"
+            ls -l "C:/ProgramData/chocolatey/lib/ffmpeg-full/tools/" || echo "FFmpeg tools dir not found"
+            ls -l "C:/ProgramData/chocolatey/lib/exiftool/tools/" || echo "ExifTool tools dir not found"
+
+            # Add tools to PATH
+            export PATH="/c/ProgramData/chocolatey/lib/ffmpeg-full/tools:/c/ProgramData/chocolatey/lib/exiftool/tools:$PATH"
+
+            echo "FFmpeg location:"
+            which ffmpeg || echo "FFmpeg not found by which"
+            echo "FFmpeg version:"
+            ffmpeg -version || echo "FFmpeg not found in PATH"
+            echo "ExifTool location:"
+            which exiftool || echo "ExifTool not found by which"
+            echo "ExifTool version:"
+            exiftool -ver || echo "ExifTool not found in PATH"
+            echo "Updated PATH:"
+            echo $PATH
           fi
         shell: bash
 
