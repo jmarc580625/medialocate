@@ -45,7 +45,6 @@ jobs:
           ffmpeg -version
           exiftool -ver
 
-
   test:
     needs: build
     strategy:
@@ -71,6 +70,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         os: ${{ matrix.os }}
+
+    - name: Check dependencies
+      run: |
+        ffmpeg -version
+        exiftool -ver
 
     # Run unit tests
     - name: Run unit tests
