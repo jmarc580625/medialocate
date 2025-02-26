@@ -151,6 +151,9 @@ class TestProxyMediaCommand(unittest.TestCase):
         ):
             main()
 
+        # Wait to ensure different timestamps
+        time.sleep(0.1)
+
         # Verify new proxies are created
         proxy_store = os.path.join(
             self.target_dir, MEDIALOCATION_DIR, MEDIAPROXIES_STORE_NAME
