@@ -31,6 +31,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: ./.github/actions/setup-poetry
+        with:
+          python-version: ${{ matrix.python-version }}
+          os: ${{ matrix.os }}
+
       - name: Install system dependencies
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
@@ -88,3 +93,4 @@ jobs:
       #   with:
       #     command: update
       #     config-file: .github/dependabot.yml
+      #
