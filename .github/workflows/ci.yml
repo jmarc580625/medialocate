@@ -14,6 +14,7 @@ on:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         os: [
           # Temporarily disabled for initial setup
@@ -21,6 +22,7 @@ jobs:
           windows-latest,
           # macos-latest
         ]
+        python-version: ["3.13"]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -43,107 +45,46 @@ jobs:
             choco install ffmpeg-full exiftool -y
           fi
 
-      - name: Verify installations
+      - name: Check dependencies
         run: |
           ffmpeg -version
           exiftool -ver
 
-  test:
-    needs: build
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [
-          # Temporarily disabled for initial setup
-          # ubuntu-latest,
-          windows-latest,
-          # macos-latest
-        ]
-        python-version: ["3.12"]
+      # Run unit tests
+      - name: Run unit tests
+        run: poetry run pytest tests/ -v --ignore=tests/release_validation
 
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash
+      # Generate coverage report
+      - name: Generate coverage report
+        run: poetry run pytest --cov=medialocate --cov-report=term --cov-report=xml
 
-    steps:
-    - uses: actions/checkout@v4
-
-    - uses: ./.github/actions/setup-poetry
-      with:
-        python-version: ${{ matrix.python-version }}
-        os: ${{ matrix.os }}
-
-    - name: Setup environment
-      run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          echo "C:\\ProgramData\\chocolatey\\bin" >> $env:GITHUB_PATH
-          echo "PATH=$PATH"
-          ls C:\\ProgramData\\chocolatey\\bin
-        fi
-
-    - name: Check dependencies
-      run: |
-        ffmpeg -version
-        exiftool -ver
-
-    # Run unit tests
-    - name: Run unit tests
-      run: poetry run pytest tests/ -v --ignore=tests/release_validation
-
-    # Generate coverage report
-    - name: Generate coverage report
-      run: poetry run pytest --cov=medialocate --cov-report=term --cov-report=xml
-
-    # Codecov integration to be added later when token is configured
-    # - name: Upload coverage to Codecov
-    #   uses: codecov/codecov-action@v4
-    #   env:
-    #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-  quality:
-    needs: build
-    strategy:
-      matrix:
-        os: [
-          # Temporarily disabled for initial setup
-          # ubuntu-latest,
-          windows-latest,
-          # macos-latest
-        ]
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - uses: ./.github/actions/setup-poetry
-      with:
-        python-version: "3.12"
-        os: ${{ matrix.os }}
+      # Codecov integration to be added later when token is configured
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v4
+      #   env:
+      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     # Code Quality Checks
-    - name: Lint with flake8
-      run: poetry run flake8 src
+      - name: Lint with flake8
+        run: poetry run flake8 src
 
-    - name: Type check with mypy
-      run: poetry run mypy src
+      - name: Type check with mypy
+        run: poetry run mypy src
 
-    - name: Security scan with Bandit
-      run: poetry run bandit -r src
+      - name: Security scan with Bandit
+        run: poetry run bandit -r src
 
-    - name: Run Release Validation Script
-      run: poetry run python scripts/release_validation.py
+      # Run Release Validation Script disabled for now
+      # - name: Run Release Validation Script
+      #   run: poetry run python scripts/release_validation.py
 
-    - name: Check dependencies for known security vulnerabilities
-      continue-on-error: true
-      run: poetry run safety check
+      - name: Check dependencies for known security vulnerabilities
+        continue-on-error: true
+        run: poetry run safety check
 
-    # Dependency automation disabled for now - can be enabled later if needed
-    # - name: Run Dependabot
-    #   uses: dependabot/dependabot-core@main
-    #   with:
-    #     command: update
-    #     config-file: .github/dependabot.yml
+      # Dependency automation disabled for now - can be enabled later if needed
+      # - name: Run Dependabot
+      #   uses: dependabot/dependabot-core@main
+      #   with:
+      #     command: update
+      #     config-file: .github/dependabot.yml

@@ -1,0 +1,51 @@
+name: 'Setup System Dependencies'
+description: 'Setup system dependencies like ffmpeg and exiftool'
+
+inputs:
+  os:
+    description: 'Operating system'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install system dependencies
+      shell: bash
+      run: |
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          sudo apt-get update
+          sudo apt-get install -y exiftool ffmpeg
+        elif [ "$RUNNER_OS" == "macOS" ]; then
+          brew install exiftool ffmpeg
+        elif [ "$RUNNER_OS" == "Windows" ]; then
+          # Add Chocolatey bin to PATH
+          echo "C:\\ProgramData\\chocolatey\\bin" >> $GITHUB_PATH
+          # Install ffmpeg and exiftool
+          choco install ffmpeg-full exiftool -y
+          echo "Adding tools directories to PATH..."
+          echo "C:\\ProgramData\\chocolatey\\lib\\ffmpeg-full\\tools" >> $GITHUB_PATH
+          echo "C:\\ProgramData\\chocolatey\\lib\\exiftool\\tools" >> $GITHUB_PATH
+        fi
+
+    - name: Verify installations
+      shell: bash
+      run: |
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          echo "Checking installation directories:"
+          ls -l "C:/ProgramData/chocolatey/lib/ffmpeg-full/tools/" || echo "FFmpeg tools dir not found"
+          ls -l "C:/ProgramData/chocolatey/lib/exiftool/tools/" || echo "ExifTool tools dir not found"
+
+          echo "FFmpeg location:"
+          which ffmpeg || echo "FFmpeg not found by which"
+          echo "FFmpeg version:"
+          ffmpeg -version || echo "FFmpeg not found in PATH"
+          echo "ExifTool location:"
+          which exiftool || echo "ExifTool not found by which"
+          echo "ExifTool version:"
+          exiftool -ver || echo "ExifTool not found in PATH"
+        else
+          echo "FFmpeg version:"
+          ffmpeg -version
+          echo "ExifTool version:"
+          exiftool -ver
+        fi
