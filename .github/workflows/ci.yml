@@ -50,25 +50,6 @@ jobs:
             choco install ffmpeg-full exiftool -y
           fi
 
-      - name: Check dependencies
-        run: |
-          ffmpeg -version
-          exiftool -ver
-
-      # Run unit tests
-      - name: Run unit tests
-        run: poetry run pytest tests/ -v --ignore=tests/release_validation
-
-      # Generate coverage report
-      - name: Generate coverage report
-        run: poetry run pytest --cov=medialocate --cov-report=term --cov-report=xml
-
-      # Codecov integration to be added later when token is configured
-      # - name: Upload coverage to Codecov
-      #   uses: codecov/codecov-action@v4
-      #   env:
-      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
     # Code Quality Checks
       - name: Lint with flake8
         run: poetry run flake8 src
@@ -83,14 +64,29 @@ jobs:
       # - name: Run Release Validation Script
       #   run: poetry run python scripts/release_validation.py
 
-      - name: Check dependencies for known security vulnerabilities
-        continue-on-error: true
-        run: poetry run safety check
-
       # Dependency automation disabled for now - can be enabled later if needed
       # - name: Run Dependabot
       #   uses: dependabot/dependabot-core@main
       #   with:
       #     command: update
       #     config-file: .github/dependabot.yml
-      #
+
+      - name: Check dependencies
+        run: |
+          ffmpeg -version
+          exiftool -ver
+          python -c "import subprocess as sp; import sys; missing = [cmd for cmd in ['exiftool', 'ffmpeg'] if sp.run(['where', cmd], capture_output=True).returncode != 0]; sys.exit(1) if missing else sys.exit(0)"
+
+      # Run unit tests
+      - name: Run unit tests
+        run: poetry run pytest tests/ -v --ignore=tests/release_validation
+
+      # Generate coverage report
+      - name: Generate coverage report
+        run: poetry run pytest --cov=medialocate --cov-report=term --cov-report=xml
+
+      # Codecov integration to be added later when token is configured
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v4
+      #   env:
+      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
