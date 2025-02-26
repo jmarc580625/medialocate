@@ -1,5 +1,13 @@
 {
+    "version": "0.2.0",
     "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
         {
             "name": "Python Debugger: locate_media.py",
             "type": "debugpy",
@@ -9,13 +17,6 @@
             "args": [
                 "sandbox"
             ]
-        },
-        {
-            "name": "Python Debugger: Current File",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal"
         },
         {
             "name": "Python Debugger: media_server.py",

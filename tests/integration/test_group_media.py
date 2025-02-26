@@ -143,6 +143,9 @@ class TestGroupMediaCommand(unittest.TestCase):
         # Store the initial modification time
         initial_mtime = os.path.getmtime(self.groups_store)
 
+        # Wait to ensure different timestamps
+        time.sleep(0.1)
+
         # Act
         with patch("os.getcwd") as mock_getcwd:
             mock_getcwd.return_value = self.test_dir
