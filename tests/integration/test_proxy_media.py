@@ -155,8 +155,13 @@ class TestProxyMediaCommand(unittest.TestCase):
         proxy_store = os.path.join(
             self.target_dir, MEDIALOCATION_DIR, MEDIAPROXIES_STORE_NAME
         )
-        self.assertTrue(os.path.exists(proxy_store))
+        self.assertTrue(
+            os.path.exists(proxy_store),
+            f"Proxy store '{proxy_store}' should be created",
+        )
         initial_mtime = os.path.getmtime(proxy_store)
+
+        # Wait to ensure different timestamps
         time.sleep(0.1)
 
         # force proxies update
@@ -169,7 +174,9 @@ class TestProxyMediaCommand(unittest.TestCase):
         self.assertTrue(os.path.exists(proxy_store))
         final_mtime = os.path.getmtime(proxy_store)
         self.assertEqual(
-            final_mtime, initial_mtime, "Proxy store should not have been regenerated"
+            final_mtime,
+            initial_mtime,
+            f"Proxy store '{proxy_store}' should not have been regenerated",
         )
 
     def test_proxy_media_update_with_force_flag(self):
@@ -185,7 +192,10 @@ class TestProxyMediaCommand(unittest.TestCase):
         proxy_store = os.path.join(
             self.target_dir, MEDIALOCATION_DIR, MEDIAPROXIES_STORE_NAME
         )
-        self.assertTrue(os.path.exists(proxy_store))
+        self.assertTrue(
+            os.path.exists(proxy_store),
+            f"Proxy store '{proxy_store}' should be created",
+        )
         initial_mtime = os.path.getmtime(proxy_store)
         time.sleep(0.1)
 
@@ -199,7 +209,9 @@ class TestProxyMediaCommand(unittest.TestCase):
         self.assertTrue(os.path.exists(proxy_store))
         final_mtime = os.path.getmtime(proxy_store)
         self.assertGreater(
-            final_mtime, initial_mtime, "Proxy store should have been regenerated"
+            final_mtime,
+            initial_mtime,
+            f"Proxy store '{proxy_store}' should have been regenerated",
         )
 
     def test_proxy_media_with_multiple_directories(self):
