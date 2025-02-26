@@ -1,6 +1,7 @@
 """Unit tests for the DictStore class."""
 
 import os
+import time
 import json
 import shutil
 import tempfile
@@ -204,6 +205,7 @@ class TestDictStore(unittest.TestCase):
         with open(self.store_path, "w") as f:
             json.dump(data_before, f)
         time_before = os.path.getmtime(self.store_path)
+        time.sleep(0.1)
         store = DictStore(self.store_dir, self.store_name)
         store.open()
 

@@ -9,6 +9,7 @@ Tests the integration between:
 """
 
 import os
+import time
 import json
 import tempfile
 import unittest
@@ -156,6 +157,7 @@ class TestProxyMediaCommand(unittest.TestCase):
         )
         self.assertTrue(os.path.exists(proxy_store))
         initial_mtime = os.path.getmtime(proxy_store)
+        time.sleep(0.1)
 
         # force proxies update
         with patch(
@@ -185,6 +187,7 @@ class TestProxyMediaCommand(unittest.TestCase):
         )
         self.assertTrue(os.path.exists(proxy_store))
         initial_mtime = os.path.getmtime(proxy_store)
+        time.sleep(0.1)
 
         # force proxies update
         with patch(

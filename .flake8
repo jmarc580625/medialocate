@@ -5,3 +5,4 @@ exclude =
     tests/*
     conftest.py
     scripts/*
+    .github/*
