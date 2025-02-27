@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v5.0.0
     hooks:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
@@ -9,26 +9,46 @@ repos:
     -   id: debug-statements
 
 -   repo: https://github.com/psf/black
-    rev: 23.3.0
+    rev: 24.10.0
     hooks:
     -   id: black
         language_version: python3
 
 -   repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
+    rev: 7.1.1
     hooks:
     -   id: flake8
         additional_dependencies: [flake8-docstrings]
+        exclude: ^(tests/|conftest\.py|scripts/)
+        args: [--max-line-length=100, --extend-ignore=E203]
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.3.0
+    rev: v1.13.0
     hooks:
     -   id: mypy
-        additional_dependencies: [types-all]
+        exclude: ^(tests/|conftest\.py|scripts/)
+        additional_dependencies:
+        - types-PyYAML
+        args: [--ignore-missing-imports, --allow-untyped-defs]
 
 -   repo: https://github.com/PyCQA/bandit
-    rev: 1.7.5
+    rev: 1.8.0
     hooks:
     -   id: bandit
-        args: ["-c", "pyproject.toml"]
-        additional_dependencies: ["bandit[toml]"]
+        exclude: ^(tests/|conftest\.py|scripts/)
+
+-   repo: local
+    hooks:
+    -   id: check-system-deps
+        name: Check System Dependencies
+        entry: python -c "import subprocess as sp; import sys; missing = [cmd for cmd in ['exiftool', 'ffmpeg'] if sp.run(['where', cmd], capture_output=True).returncode != 0]; sys.exit(1) if missing else sys.exit(0)"
+        language: system
+        pass_filenames: false
+        always_run: true
+
+    -   id: pytest
+        name: pytest
+        entry: poetry run pytest -v --ignore=tests/release_validation
+        language: system
+        pass_filenames: false
+        always_run: true

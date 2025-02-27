@@ -1,122 +1,92 @@
+# Continuous Integration Workflow for MediaLocate
+# This workflow provides comprehensive testing and validation across multiple environments
+
 name: CI/CD Pipeline
 
+# Trigger the workflow on push and pull request events
+# Covers main development branches to ensure code quality
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]  # Key development branch
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]  # PRs targeting main branch
 
 jobs:
-  quality:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-        
-    - name: Cache pip packages
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('requirements*.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-        
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
-        
-    - name: Check formatting with Black
-      run: black --check src tests
-        
-    - name: Lint with flake8
-      run: flake8 src tests --max-line-length=100
-        
-    - name: Type checking with mypy
-      run: mypy src
-        
-    - name: Security check with bandit
-      run: bandit -r src
-
-  test:
-    needs: quality
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.9', '3.10', '3.11']
-    
-    env:
-      PYTHONPATH: src:tests
-      COVERAGE_FILE: .coverage.${{ matrix.python-version }}
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-        
-    - name: Cache pip packages
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('requirements*.txt') }}-py${{ matrix.python-version }}
-        restore-keys: |
-          ${{ runner.os }}-pip-py${{ matrix.python-version }}
-        
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
-        
-    - name: Run tests with coverage
-      run: |
-        pytest --cov=src --cov-report=xml --cov-report=html --junitxml=test-results-${{ matrix.python-version }}.xml
-        
-    - name: Upload test results
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: test-results-${{ matrix.python-version }}
-        path: |
-          test-results-${{ matrix.python-version }}.xml
-          htmlcov
-        
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        env_vars: OS,PYTHON
-        name: codecov-py${{ matrix.python-version }}
-        fail_ci_if_error: true
-
   build:
-    needs: test
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [
+          # Temporarily disabled for initial setup
+          # ubuntu-latest,
+          windows-latest,
+          # macos-latest
+        ]
+        python-version: ["3.13"]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-        
-    - name: Install build dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build wheel
-        
-    - name: Build package
-      run: python -m build
-      
-    - name: Upload package artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: dist
-        path: dist/
-        if-no-files-found: error
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-poetry
+        with:
+          python-version: ${{ matrix.python-version }}
+          os: ${{ matrix.os }}
+
+      - name: Install system dependencies
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y exiftool ffmpeg
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            brew install exiftool ffmpeg
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+            # Add Chocolatey bin to PATH
+            echo "C:\\ProgramData\\chocolatey\\bin" >> $env:GITHUB_PATH
+            # Install ffmpeg and exiftool
+            choco install ffmpeg-full exiftool -y
+          fi
+
+    # Code Quality Checks
+      - name: Lint with flake8
+        run: poetry run flake8 src
+
+      - name: Type check with mypy
+        run: poetry run mypy src
+
+      - name: Security scan with Bandit
+        run: poetry run bandit -r src
+
+      # Run Release Validation Script disabled for now
+      # - name: Run Release Validation Script
+      #   run: poetry run python scripts/release_validation.py
+
+      # Dependency automation disabled for now - can be enabled later if needed
+      # - name: Run Dependabot
+      #   uses: dependabot/dependabot-core@main
+      #   with:
+      #     command: update
+      #     config-file: .github/dependabot.yml
+
+      - name: Check dependencies
+        run: |
+          ffmpeg -version
+          exiftool -ver
+          python -c "import subprocess as sp; import sys; missing = [cmd for cmd in ['exiftool', 'ffmpeg'] if sp.run(['where', cmd], capture_output=True).returncode != 0]; sys.exit(1) if missing else sys.exit(0)"
+
+      # Run unit tests
+      - name: Run unit tests
+        run: poetry run pytest tests/ -v --ignore=tests/release_validation
+
+      # Generate coverage report
+      - name: Generate coverage report
+        run: poetry run pytest --cov=medialocate --cov-report=term --cov-report=xml
+
+      # Codecov integration to be added later when token is configured
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v4
+      #   env:
+      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

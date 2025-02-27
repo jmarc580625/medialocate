@@ -1,0 +1,62 @@
+name: 'Setup Poetry'
+description: 'Setup Poetry with standardized configuration and caching'
+
+inputs:
+  python-version:
+    description: 'Python version to use'
+    required: true
+  os:
+    description: 'Operating system'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Debug environment before Poetry
+      shell: bash
+      run: |
+        echo "PATH=$PATH"
+        echo "APPDATA=$APPDATA"
+        echo "LOCALAPPDATA=$LOCALAPPDATA"
+        echo "HOME=$HOME"
+        echo "Python location:"
+        which python || echo "Python not found"
+        echo "Python version:"
+        python --version || echo "Python not found"
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.7.1
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Debug environment after Poetry
+      shell: bash
+      run: |
+        echo "PATH=$PATH"
+        echo "Poetry location:"
+        which poetry || echo "Poetry not found"
+        echo "Poetry version:"
+        poetry --version || echo "Poetry not found"
+        echo "Looking for poetry in common locations:"
+        ls -la $HOME/.local/bin/poetry || echo "Not in ~/.local/bin"
+        ls -la $APPDATA/Python/Scripts/poetry || echo "Not in %APPDATA%/Python/Scripts"
+        ls -la $LOCALAPPDATA/Python/Scripts/poetry || echo "Not in %LOCALAPPDATA%/Python/Scripts"
+
+    - name: Load cached Poetry virtualenv
+      id: cached-poetry-dependencies
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv-${{ inputs.os }}-${{ inputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      shell: bash
+      run: poetry install --no-interaction
